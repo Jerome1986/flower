@@ -1,9 +1,8 @@
 {
-  "name": "uni-920",
+  "name": "flower",
   "version": "1.0.0",
   "author": {
-    "name": "920",
-    "url": ""
+    "name": "jerome"
   },
   "scripts": {
     "dev:app": "uni -p app",
@@ -66,6 +65,7 @@
     "@dcloudio/uni-mp-xhs": "3.0.0-4070620250821001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4070620250821001",
     "@dcloudio/uni-ui": "^1.5.11",
+    "@wot-ui/ui": "^2.3.2",
     "pinia": "2.0.27",
     "pinia-plugin-persistedstate": "^3.2.0",
     "vue": "^3.5.20",
@@ -83,6 +83,7 @@
     "@types/node": "^18.11.9",
     "@uni-helper/uni-app-types": "1.0.0-alpha.6",
     "@uni-helper/uni-ui-types": "1.0.0-alpha.6",
+    "@uni-helper/vite-plugin-uni-components": "^0.3.2",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.0",
     "@vue/runtime-core": "^3.5.20",
@@ -93,7 +94,7 @@
     "lint-staged": "^13.0.3",
     "miniprogram-api-typings": "^4.0.5",
     "prettier": "^2.7.1",
-    "sass": "^1.56.1",
+    "sass": "^1.98.0",
     "sass-loader": "^16.0.6",
     "typescript": "^5.1.6",
     "unplugin-vue-components": "^30.0.0",
