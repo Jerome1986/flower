@@ -1,0 +1,354 @@
+@use '../../uni.scss' as *;
+
+// 测试登录入口固定在底部导航上方。
+.my-page .test-login-float {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(var(--window-bottom, 0px) + 30rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  padding: 18rpx 26rpx;
+  border-radius: 40rpx;
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  font-size: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(50, 132, 91, 0.2);
+}
+.test-role-label {
+  display: block;
+  margin-top: 8rpx;
+  color: $qs-brandColor;
+  font-size: 21rpx;
+}
+
+// 与首页统一的间距、色彩和按钮基础样式。
+.my-page {
+  padding: 24rpx $qs-page-spacing 32rpx;
+  color: $qs-font-body;
+  text {
+    display: block;
+  }
+  button {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    text-align: left;
+  }
+}
+.muted {
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+.eyebrow {
+  color: $qs-brandColor;
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+}
+.section-title {
+  color: $qs-font-title;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.entry-title {
+  color: $qs-font-title;
+  font-size: 27rpx;
+  font-weight: 500;
+}
+.chevron {
+  color: $qs-font-dec2;
+  font-size: 28rpx;
+}
+.my-page .text-button {
+  color: $qs-font-dec;
+  font-size: 22rpx;
+}
+.text-button .iconfont,
+.invite-link .iconfont {
+  display: inline;
+  margin-left: 8rpx;
+  font-size: 22rpx;
+}
+
+// 账户区域不展示尚未接入的券数和订单数。
+.profile-section {
+  padding: 30rpx 24rpx 0;
+  border-radius: 24rpx;
+  background: $qs-brandColor-light;
+}
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}
+.profile-section {
+  padding-bottom: 24rpx;
+}
+.sales-summary {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 28rpx;
+}
+.sales-summary > view {
+  flex: 1;
+  min-width: 0;
+}
+.sales-value {
+  color: $qs-brandColor;
+  font-size: 34rpx;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+.gift-note {
+  margin-top: 22rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid $qs-divider;
+}
+.my-page .avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  border: 4rpx solid $qs-card-bg;
+  border-radius: 50%;
+  background: $qs-card-bg;
+  color: $qs-brandColor;
+  .iconfont {
+    font-size: 64rpx;
+    line-height: 1;
+  }
+}
+.profile-copy {
+  flex: 1;
+  min-width: 0;
+}
+.profile-name {
+  overflow: hidden;
+  color: $qs-font-title;
+  font-size: 32rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-copy .muted {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+}
+.my-page .login-button {
+  flex-shrink: 0;
+  padding: 12rpx 18rpx;
+  border-radius: 30rpx;
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  font-size: 21rpx;
+}
+.account-entries {
+  display: flex;
+  margin-top: 32rpx;
+  padding: 24rpx 0 28rpx;
+  border-top: 1rpx solid $qs-border;
+}
+.account-entries button {
+  flex: 1;
+  text-align: center;
+}
+.account-entries button:first-child {
+  border-right: 1rpx solid $qs-border;
+}
+.account-icon {
+  display: flex;
+  height: 56rpx;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10rpx;
+  color: $qs-brandColor;
+}
+.account-icon .iconfont {
+  font-size: 48rpx;
+  line-height: 1;
+}
+.account-entries .muted {
+  margin-top: 5rpx;
+  font-size: 20rpx;
+}
+
+// 订单入口与服务列表。
+.panel {
+  margin-top: 24rpx;
+  padding: 28rpx 24rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.order-entries {
+  display: flex;
+  margin: 32rpx -12rpx 28rpx;
+}
+.order-entries button {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 14rpx;
+  text-align: center;
+  font-size: 21rpx;
+}
+.order-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid $qs-divider;
+  color: $qs-font-dec;
+  font-size: 21rpx;
+}
+.order-note .iconfont {
+  color: $qs-brandColor;
+  font-size: 28rpx;
+}
+.services-panel {
+  padding-bottom: 4rpx;
+}
+.services-panel .panel-heading {
+  margin-bottom: 10rpx;
+}
+.my-page .service-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  width: 100%;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid $qs-divider;
+}
+.service-row:last-child {
+  border-bottom: 0;
+}
+.service-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 18rpx;
+  background: $qs-brandColor-light;
+}
+.service-copy {
+  flex: 1;
+  min-width: 0;
+}
+.service-copy .muted {
+  margin-top: 4rpx;
+  font-size: 21rpx;
+}
+
+// 邀请活动延续首页的花礼文案与浅绿色视觉。
+.my-page .invite-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  width: 100%;
+  margin-top: 24rpx;
+  padding: 28rpx;
+  overflow: hidden;
+  border: 1rpx solid $qs-border;
+  border-radius: 24rpx;
+  background: $qs-card-activity-bg;
+}
+.invite-copy {
+  flex: 1;
+  min-width: 0;
+}
+.invite-title {
+  margin: 12rpx 0 8rpx;
+  color: $qs-font-title;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.invite-link {
+  margin-top: 20rpx;
+  color: $qs-brandColor;
+  font-size: 23rpx;
+  font-weight: 500;
+}
+.invite-art {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+  height: 120rpx;
+  border: 1rpx solid $qs-border;
+  border-radius: 50%;
+  background: $qs-card-bg;
+  color: $qs-brandColor;
+}
+.invite-art .iconfont {
+  font-size: 78rpx;
+  line-height: 1;
+}
+.my-page .daily-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  width: 100%;
+  margin-top: 24rpx;
+  padding: 20rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
+.daily-card image {
+  flex-shrink: 0;
+  width: 132rpx;
+  height: 154rpx;
+  border-radius: 16rpx;
+}
+.daily-copy {
+  flex: 1;
+  min-width: 0;
+}
+.daily-copy .muted {
+  margin-top: 8rpx;
+  font-size: 21rpx;
+}
+.my-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 40rpx;
+  color: $qs-font-dec2;
+  font-size: 23rpx;
+  letter-spacing: 3rpx;
+}
+.my-footer .muted {
+  font-size: 20rpx;
+  letter-spacing: 0;
+}
+// 店长管理入口放在账户区下方，明确区别于用户订单。
+.my-page .manager-entry {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  width: 100%;
+  margin-top: 22rpx;
+  padding: 22rpx;
+  border-radius: 20rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 28rpx;
+}

@@ -1,0 +1,192 @@
+@use '../../uni.scss' as *;
+
+// 定制专区延续首页成品花束入口的草木色与圆角。
+.bouquets-page {
+  padding: 28rpx $qs-page-spacing calc(32rpx + env(safe-area-inset-bottom));
+  color: $qs-font-body;
+  button {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+  }
+}
+.eyebrow {
+  display: block;
+  color: $qs-brandColor;
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+}
+.page-title {
+  display: block;
+  margin-top: 12rpx;
+  color: $qs-font-title;
+  font-size: 38rpx;
+  font-weight: 600;
+}
+.subtitle {
+  display: block;
+  margin-top: 12rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  line-height: 1.8;
+}
+.service-note {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 26rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: $qs-card-custom-bg;
+}
+.service-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 62rpx;
+  height: 62rpx;
+  color: $qs-brandColor;
+  font-size: 44rpx;
+}
+.service-title {
+  display: block;
+  font-size: 25rpx;
+  color: $qs-font-title;
+}
+.service-copy {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  color: $qs-font-dec;
+  line-height: 1.8;
+}
+.bouquet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 26rpx;
+  margin-top: 26rpx;
+}
+.bouquet-card {
+  overflow: hidden;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
+.cover {
+  height: 540rpx;
+  background: $qs-card-custom-bg;
+  image {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+.card-body {
+  padding: 28rpx;
+}
+.card-heading,
+.name-row,
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.name-row {
+  justify-content: flex-start;
+}
+.collection-number {
+  color: $qs-font-dec2;
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+}
+.bouquet-name {
+  color: $qs-font-title;
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 3rpx;
+}
+.delivery-tag {
+  padding: 6rpx 14rpx;
+  border-radius: 10rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 21rpx;
+}
+.description {
+  display: block;
+  margin-top: 16rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  line-height: 1.9;
+}
+.card-bottom {
+  margin-top: 24rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid $qs-divider;
+}
+.specification {
+  display: block;
+  margin-bottom: 6rpx;
+  color: $qs-font-dec;
+  font-size: 21rpx;
+}
+.price {
+  color: $qs-brandColor;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.currency {
+  margin-right: 4rpx;
+  font-size: 22rpx;
+}
+.bouquets-page .choose-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  flex: none;
+  padding: 16rpx 22rpx;
+  border-radius: 30rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 23rpx;
+  .iconfont {
+    font-size: 20rpx;
+  }
+}
+.tips-panel {
+  margin-top: 28rpx;
+  padding: 28rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
+.section-title {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.tip {
+  display: block;
+  margin-top: 16rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  line-height: 1.9;
+}
+.page-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 30rpx;
+  color: $qs-font-dec2;
+  font-size: 22rpx;
+}
+.demo-note {
+  font-size: 21rpx;
+}

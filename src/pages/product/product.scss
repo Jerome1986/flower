@@ -1,0 +1,302 @@
+@use '../../uni.scss' as *;
+
+// 详情页沿用首页的品牌色、圆角和卡片间距。
+.product-page {
+  color: $qs-font-body;
+  button {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+  }
+}
+.product-gallery {
+  padding: 24rpx $qs-page-spacing 0;
+}
+.product-cover {
+  display: block;
+  width: 100%;
+  height: 560rpx;
+  border-radius: 24rpx;
+  background: $qs-brandColor-light;
+}
+.content {
+  padding: 0 $qs-page-spacing calc(170rpx + env(safe-area-inset-bottom));
+}
+.panel {
+  margin-top: 20rpx;
+  padding: 28rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
+.product-summary {
+  margin-top: 0;
+  padding: 30rpx 4rpx 32rpx;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.eyebrow {
+  color: $qs-brandColor;
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+}
+.title-row,
+.quantity-row,
+.store-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.title-row {
+  margin-top: 0;
+  align-items: baseline;
+}
+.product-title {
+  font-size: 38rpx;
+  color: $qs-font-title;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+.price {
+  color: $qs-brandColor;
+  font-size: 36rpx;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.currency {
+  margin-right: 4rpx;
+  font-size: 23rpx;
+}
+.subtitle {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 23rpx;
+  line-height: 1.9;
+  color: $qs-font-dec;
+}
+.summary-tags {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 18rpx;
+  text {
+    color: $qs-font-dec;
+    font-size: 21rpx;
+  }
+  text + text {
+    padding-left: 16rpx;
+    border-left: 1rpx solid $qs-border;
+  }
+}
+.product-summary + .panel {
+  margin-top: 0;
+}
+.section-title {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.field {
+  margin-top: 26rpx;
+}
+.field-label {
+  display: block;
+  font-size: 25rpx;
+  color: $qs-font-title;
+}
+.specification {
+  display: inline-flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+  padding: 16rpx 24rpx;
+  border: 1rpx solid $qs-brandColor;
+  border-radius: 14rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 25rpx;
+}
+.spec-unit {
+  font-size: 21rpx;
+}
+.quantity-row {
+  padding: 26rpx 0;
+  margin-top: 24rpx;
+  border-top: 1rpx solid $qs-divider;
+  border-bottom: 1rpx solid $qs-divider;
+}
+.hint {
+  display: block;
+  margin-top: 10rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  flex: none;
+  border: 1rpx solid $qs-border;
+  border-radius: 14rpx;
+  overflow: hidden;
+  text {
+    min-width: 62rpx;
+    text-align: center;
+    font-size: 26rpx;
+  }
+  button {
+    width: 58rpx;
+    height: 58rpx;
+    border-radius: 0;
+    background: $qs-input-bg;
+    color: $qs-brandColor;
+    font-size: 32rpx;
+    &[disabled] {
+      color: $qs-disabled-font;
+    }
+  }
+}
+.method-options {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+    flex: 1;
+    padding: 18rpx 8rpx;
+    border: 1rpx solid $qs-border;
+    border-radius: 14rpx;
+    font-size: 24rpx;
+    &.selected {
+      border-color: $qs-brandColor;
+      background: $qs-brandColor-light;
+      color: $qs-brandColor;
+    }
+    &[disabled] {
+      color: $qs-disabled-font;
+      background: $qs-input-bg;
+    }
+  }
+}
+.product-page .text-button {
+  color: $qs-brandColor;
+  font-size: 23rpx;
+}
+.store-name {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 27rpx;
+  color: $qs-font-title;
+}
+.tips {
+  display: block;
+  margin-top: 16rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  line-height: 1.9;
+}
+.demo-note {
+  display: block;
+  margin-top: 28rpx;
+  text-align: center;
+  color: $qs-font-dec2;
+  font-size: 21rpx;
+}
+.purchase-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 20rpx $qs-page-spacing calc(20rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid $qs-divider;
+  background: $qs-card-bg;
+}
+.total-label {
+  display: block;
+  margin-bottom: 4rpx;
+  color: $qs-font-dec;
+  font-size: 21rpx;
+}
+.product-page .buy-button {
+  width: 310rpx;
+  padding: 20rpx;
+  border-radius: 40rpx;
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  font-size: 28rpx;
+  &[disabled] {
+    background: $qs-disabled-bg;
+    color: $qs-font-dec;
+  }
+}
+.empty-state {
+  padding: 100rpx 24rpx;
+  text-align: center;
+  color: $qs-font-dec;
+  button {
+    margin-top: 24rpx;
+    color: $qs-brandColor;
+  }
+}
+// 固定数量按钮的点击区域，图标保持水平垂直居中。
+.product-page .stepper-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 64rpx;
+  height: 64rpx;
+  padding: 0;
+  line-height: 1;
+  background: $qs-input-bg;
+  color: $qs-brandColor;
+  .iconfont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    width: 32rpx;
+    height: 32rpx;
+    font-size: 28rpx;
+    line-height: 1;
+  }
+  &[disabled] {
+    color: $qs-disabled-font;
+  }
+}
+.stepper .quantity-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68rpx;
+  height: 64rpx;
+}
+.minus-icon {
+  width: 22rpx;
+  height: 3rpx;
+  background: currentColor;
+  border-radius: 2rpx;
+}
+// 详情图保留原始比例，支持长图展示。
+.detail-images {
+  margin-top: 24rpx;
+  overflow: hidden;
+  border-radius: 16rpx;
+}
+.detail-image {
+  display: block;
+  width: 100%;
+}

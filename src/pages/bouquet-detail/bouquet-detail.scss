@@ -1,0 +1,34 @@
+@use '../product/product.scss';
+@use '../../uni.scss' as *;
+
+// 复用普通商品详情布局，补充平台配送信息样式。
+.delivery-option {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 16rpx;
+  padding: 22rpx;
+  border: 1rpx solid $qs-border;
+  border-radius: 16rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 26rpx;
+  > .iconfont {
+    flex: none;
+    font-size: 38rpx;
+  }
+}
+.delivery-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding-top: 22rpx;
+  margin-top: 22rpx;
+  border-top: 1rpx solid $qs-divider;
+  font-size: 23rpx;
+  line-height: 1.8;
+  > text:last-child {
+    text-align: right;
+  }
+}

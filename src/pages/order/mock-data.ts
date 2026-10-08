@@ -1,0 +1,101 @@
+// 下单页模拟门店信息。
+export const store = {
+  name: '花间 · 中心店',
+  distance: '1.7km',
+  address: '花园路 18 号一层（模拟地址）',
+  hours: '09:00–21:00',
+  phone: '13800000001',
+  notice: '前方 3 束制作中 · 每一束心意，都认真准备',
+}
+// 左侧鲜花分类。
+export const categories = [
+  { id: 'rose', name: '经典玫瑰' },
+  { id: 'tulip', name: '温柔郁金香' },
+  { id: 'sunflower', name: '阳光向日葵' },
+  { id: 'mix', name: '缤纷混搭' },
+  { id: 'surprise', name: '设计师惊喜' },
+  { id: 'gift', name: '祝福花礼' },
+]
+// 模拟商品，复用项目已有图片。
+export const products = [
+  {
+    id: 'rose-1',
+    categoryId: 'rose',
+    name: '爱你如初',
+    description: '经典玫瑰 · 浪漫心意',
+    price: 129,
+    image: '/static/home/rose.jpg',
+  },
+  {
+    id: 'rose-2',
+    categoryId: 'rose',
+    name: '唯一挚爱',
+    description: '精选花束 · 专属告白',
+    price: 145,
+    image: '/static/home/chenyu.jpg',
+  },
+  {
+    id: 'rose-3',
+    categoryId: 'rose',
+    name: '初心不忘',
+    description: '温柔花礼 · 记录美好',
+    price: 199,
+    image: '/static/home/luoyan.jpg',
+  },
+  {
+    id: 'rose-4',
+    categoryId: 'rose',
+    name: '爱意肆意',
+    description: '心意花束 · 仪式感满满',
+    price: 399,
+    image: '/static/home/biyue.jpg',
+  },
+  {
+    id: 'rose-5',
+    categoryId: 'rose',
+    name: '满怀浪漫',
+    description: '浪漫花礼 · 给特别的你',
+    price: 960,
+    image: '/static/home/rose.jpg',
+  },
+  {
+    id: 'tulip-1',
+    categoryId: 'tulip',
+    name: '春日来信',
+    description: '郁金香 5 支 · 日常小确幸',
+    price: 29.9,
+    image: '/static/home/tulip.jpg',
+  },
+  {
+    id: 'sunflower-1',
+    categoryId: 'sunflower',
+    name: '向阳而生',
+    description: '向日葵 3 支 · 明亮好心情',
+    price: 19.9,
+    image: '/static/home/sunflower.jpg',
+  },
+  {
+    id: 'mix-1',
+    categoryId: 'mix',
+    name: '花开有时',
+    description: '缤纷花束 · 把美好带回家',
+    price: 159,
+    image: '/static/home/luoyan.jpg',
+  },
+  {
+    id: 'surprise-1',
+    categoryId: 'surprise',
+    name: '不期而遇',
+    description: '当季鲜花 · 设计师搭配',
+    price: 199,
+    image: '/static/home/chenyu.jpg',
+  },
+  {
+    id: 'gift-1',
+    categoryId: 'gift',
+    name: '美好如约',
+    description: '祝福花礼 · 庆祝每个好日子',
+    price: 269,
+    image: '/static/home/biyue.jpg',
+  },
+]

@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    WdButton: typeof import('@wot-ui/ui/components/wd-button/wd-button.vue')['WdButton']
+    WdIcon: typeof import('@wot-ui/ui/components/wd-icon/wd-icon.vue')['WdIcon']
+    WdPopup: typeof import('@wot-ui/ui/components/wd-popup/wd-popup.vue')['WdPopup']
   }
 }

@@ -1,0 +1,337 @@
+@use '../../uni.scss' as *;
+
+// 确认订单延续首页的绿色、留白和圆角卡片。
+.checkout-page {
+  padding: 28rpx $qs-page-spacing calc(180rpx + env(safe-area-inset-bottom));
+  color: $qs-font-body;
+  button {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    text-align: left;
+  }
+}
+.eyebrow {
+  display: block;
+  color: $qs-brandColor;
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+}
+.page-title {
+  display: block;
+  margin-top: 12rpx;
+  color: $qs-font-title;
+  font-size: 38rpx;
+  font-weight: 600;
+}
+.subtitle {
+  display: block;
+  margin-top: 10rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  line-height: 1.8;
+}
+.panel {
+  margin-top: 22rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid $qs-divider;
+  background: $qs-card-bg;
+}
+.section-title {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.section-heading,
+.product-price-row,
+.coupon-entry,
+.amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.method-tabs {
+  display: flex;
+  padding: 5rpx;
+  border-radius: 36rpx;
+  background: $qs-input-bg;
+  button {
+    padding: 10rpx 22rpx;
+    border-radius: 30rpx;
+    font-size: 23rpx;
+    &.selected {
+      background: $qs-brandColor;
+      color: $qs-font-inverse;
+    }
+    &[disabled] {
+      color: $qs-disabled-font;
+    }
+  }
+}
+.store-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 18rpx;
+  padding: 26rpx 0;
+}
+.entry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 66rpx;
+  height: 66rpx;
+  border-radius: 16rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  .iconfont {
+    font-size: 38rpx;
+  }
+}
+.store-copy {
+  flex: 1;
+  min-width: 0;
+}
+.store-name,
+.product-name {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.hint {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: $qs-font-dec;
+}
+.delivery-note {
+  margin-bottom: 16rpx;
+  padding: 14rpx 18rpx;
+  border-radius: 12rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx 0;
+  border-top: 1rpx solid $qs-divider;
+  input {
+    flex: 1;
+    min-width: 0;
+    font-size: 25rpx;
+  }
+}
+.field-label {
+  flex: none;
+  width: 140rpx;
+  color: $qs-font-title;
+  font-size: 25rpx;
+}
+.address-field {
+  padding-top: 24rpx;
+  border-top: 1rpx solid $qs-divider;
+  textarea {
+    width: 100%;
+    min-height: 90rpx;
+    margin-top: 18rpx;
+    font-size: 24rpx;
+    line-height: 1.8;
+  }
+}
+.fulfillment-hint {
+  padding-top: 14rpx;
+  border-top: 1rpx solid $qs-divider;
+}
+.product-row {
+  display: flex;
+  gap: 22rpx;
+  margin-top: 24rpx;
+  image {
+    flex: none;
+    width: 158rpx;
+    height: 174rpx;
+    border-radius: 16rpx;
+  }
+}
+.product-copy {
+  flex: 1;
+  min-width: 0;
+}
+.product-price-row {
+  margin-top: 12rpx;
+  font-size: 27rpx;
+  .hint {
+    margin-top: 0;
+  }
+}
+.checkout-page .coupon-entry {
+  width: 100%;
+  > view {
+    display: flex;
+    align-items: center;
+    gap: 14rpx;
+    color: $qs-font-dec;
+  }
+}
+.coupon-value,
+.discount {
+  color: $qs-brandColor;
+  font-size: 25rpx;
+}
+.coupon-options {
+  margin-top: 22rpx;
+}
+.checkout-page .coupon-option {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  width: 100%;
+  padding: 20rpx;
+  border: 1rpx solid $qs-border;
+  border-radius: 16rpx;
+  background: $qs-coupon-bg;
+  &.selected {
+    border-color: $qs-brandColor;
+  }
+}
+.coupon-amount {
+  flex: none;
+  color: $qs-brandColor;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+.coupon-copy {
+  flex: 1;
+  font-size: 25rpx;
+}
+.selection-dot {
+  flex: none;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 1rpx solid $qs-border;
+  background: $qs-card-bg;
+  &.checked {
+    border: 8rpx solid $qs-brandColor;
+  }
+}
+.checkout-page .no-coupon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 18rpx;
+  padding: 14rpx 0;
+  font-size: 24rpx;
+}
+.remark-input {
+  width: 100%;
+  height: 130rpx;
+  margin-top: 22rpx;
+  padding: 18rpx;
+  box-sizing: border-box;
+  border-radius: 14rpx;
+  background: $qs-input-bg;
+  font-size: 23rpx;
+  line-height: 1.8;
+}
+.character-count {
+  display: block;
+  margin-top: 10rpx;
+  text-align: right;
+  color: $qs-font-dec2;
+  font-size: 20rpx;
+}
+.amount-row {
+  margin-top: 24rpx;
+  font-size: 24rpx;
+}
+.total-row {
+  padding-top: 24rpx;
+  border-top: 1rpx solid $qs-divider;
+  color: $qs-font-title;
+}
+.price {
+  color: $qs-brandColor;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.currency {
+  margin-right: 4rpx;
+  font-size: 23rpx;
+}
+.demo-note {
+  display: block;
+  margin-top: 28rpx;
+  color: $qs-font-dec2;
+  text-align: center;
+  font-size: 21rpx;
+  line-height: 1.7;
+}
+.submit-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 18rpx $qs-page-spacing calc(20rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid $qs-divider;
+  background: $qs-card-bg;
+  .hint {
+    margin-top: 0;
+  }
+}
+.checkout-page .submit-button {
+  width: 310rpx;
+  padding: 20rpx;
+  border-radius: 40rpx;
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  text-align: center;
+  font-size: 28rpx;
+}
+.empty-state {
+  padding: 100rpx 24rpx;
+  color: $qs-font-dec;
+  text-align: center;
+  button {
+    margin-top: 24rpx;
+    color: $qs-brandColor;
+  }
+}
+// 配送地址选择入口与其他表单操作保持一致。
+.address-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.coupon-option + .coupon-option {
+  margin-top: 16rpx;
+}
+.checkout-page .coupon-option[disabled] {
+  background: $qs-input-bg;
+  color: $qs-font-dec;
+}
+.checkout-page .address-select {
+  color: $qs-brandColor;
+  font-size: 23rpx;
+  .iconfont {
+    font-size: 20rpx;
+  }
+}

@@ -1,0 +1,248 @@
+@use '../../uni.scss' as *;
+
+// 页面占满可用高度，分类和商品独立滚动。
+.order-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--window-top, 0px) - var(--window-bottom, 0px));
+  overflow: hidden;
+  color: $qs-font-body;
+  button {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    text-align: left;
+    border-radius: 0;
+  }
+}
+.store-card {
+  flex-shrink: 0;
+  padding: 28rpx $qs-page-spacing;
+  background: $qs-card-bg;
+}
+.store-name {
+  color: $qs-font-title;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.store-header,
+.method-tabs,
+.store-details,
+.notice,
+.product-bottom {
+  display: flex;
+  align-items: center;
+}
+.store-header,
+.store-details,
+.product-bottom {
+  justify-content: space-between;
+}
+.order-page .store-name {
+  min-width: 0;
+  color: $qs-font-title;
+  font-size: 32rpx;
+  font-weight: 600;
+  .iconfont {
+    font-size: 24rpx;
+  }
+}
+.method-tabs {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  padding: 5rpx;
+  border-radius: 40rpx;
+  background: $qs-input-bg;
+  button {
+    padding: 10rpx 20rpx;
+    border-radius: 32rpx;
+    font-size: 24rpx;
+    &.active {
+      background: $qs-brandColor;
+      color: $qs-font-inverse;
+    }
+  }
+}
+.store-distance {
+  margin-top: 12rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  .iconfont {
+    font-size: 26rpx;
+  }
+}
+.notice {
+  gap: 12rpx;
+  margin-top: 24rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 12rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 22rpx;
+}
+.notice-copy {
+  flex: 1;
+}
+.order-page .notice-close {
+  width: 40rpx;
+  font-size: 30rpx;
+  text-align: center;
+}
+.order-page .store-details {
+  width: 100%;
+  padding: 24rpx 0;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+}
+.store-info {
+  padding: 0 0 24rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+  line-height: 1.8;
+  text {
+    display: block;
+  }
+}
+// 分类高亮与页面边缘保留统一留白。
+.catalog {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 0 $qs-page-spacing;
+  border-top: 1rpx solid $qs-divider;
+}
+.category-list {
+  flex: none;
+  width: 174rpx;
+  background: $qs-pageBackGroundColor;
+}
+.order-page .category-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 110rpx;
+  padding: 24rpx 20rpx;
+  font-size: 25rpx;
+  &.selected {
+    background: $qs-card-bg;
+    color: $qs-brandColor;
+    font-weight: 600;
+    &::before {
+      position: absolute;
+      left: 0;
+      top: 36rpx;
+      bottom: 36rpx;
+      width: 6rpx;
+      border-radius: 4rpx;
+      background: $qs-brandColor;
+      content: '';
+    }
+  }
+}
+.product-list {
+  min-width: 0;
+  background: $qs-card-bg;
+}
+.product-heading {
+  padding: 24rpx 0 8rpx 20rpx;
+}
+.heading-title {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.muted {
+  display: block;
+  margin-top: 6rpx;
+  color: $qs-font-dec;
+  font-size: 21rpx;
+}
+.product-card {
+  display: flex;
+  gap: 18rpx;
+  margin: 16rpx 0 16rpx 20rpx;
+  padding: 12rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 20rpx;
+  background: $qs-pageBackGroundColor;
+}
+.product-image {
+  flex-shrink: 0;
+  width: 170rpx;
+  height: 190rpx;
+  border-radius: 14rpx;
+}
+.product-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6rpx 0;
+}
+.order-page .product-name {
+  color: $qs-font-title;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+.product-description {
+  margin-top: 10rpx;
+  color: $qs-font-dec;
+  font-size: 20rpx;
+  line-height: 1.6;
+}
+.product-bottom {
+  gap: 8rpx;
+  margin-top: auto;
+  padding-top: 12rpx;
+}
+.price {
+  color: $qs-brandColor;
+  font-size: 32rpx;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.currency {
+  margin-right: 3rpx;
+  font-size: 21rpx;
+}
+.price-suffix {
+  margin-left: 5rpx;
+  color: $qs-font-dec2;
+  font-size: 19rpx;
+  font-weight: 400;
+}
+.order-page .add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  line-height: 1;
+  .iconfont {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 32rpx;
+    line-height: 1;
+  }
+}
+.list-footer {
+  padding: 24rpx 12rpx calc(28rpx + env(safe-area-inset-bottom));
+  color: $qs-font-dec2;
+  text-align: center;
+  font-size: 21rpx;
+  line-height: 1.8;
+  text {
+    display: block;
+  }
+}

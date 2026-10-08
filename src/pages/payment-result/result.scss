@@ -1,0 +1,193 @@
+@use '../../uni.scss' as *;
+
+// 支付结果延续项目绿色、圆角卡片和统一页面留白。
+.result-page {
+  padding: 44rpx $qs-page-spacing calc(32rpx + env(safe-area-inset-bottom));
+  color: $qs-font-body;
+  button {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+  }
+}
+.success-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 20rpx 36rpx;
+  text-align: center;
+}
+.success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: $qs-brandColor-light;
+}
+.success-title {
+  margin-top: 24rpx;
+  color: $qs-font-title;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+.success-copy {
+  margin-top: 14rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  line-height: 1.8;
+}
+.amount {
+  margin-top: 28rpx;
+  color: $qs-brandColor;
+  font-size: 56rpx;
+  font-weight: 600;
+}
+.currency {
+  margin-right: 6rpx;
+  font-size: 28rpx;
+}
+.amount-label {
+  margin-top: 6rpx;
+  color: $qs-font-dec;
+  font-size: 21rpx;
+}
+.panel {
+  margin-top: 20rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid $qs-divider;
+  background: $qs-card-bg;
+}
+.panel-heading,
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.section-title {
+  color: $qs-font-title;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.status-tag {
+  padding: 6rpx 14rpx;
+  border-radius: 10rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 21rpx;
+}
+.product-row {
+  display: flex;
+  gap: 22rpx;
+  margin: 24rpx 0;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid $qs-divider;
+  image {
+    flex: none;
+    width: 132rpx;
+    height: 144rpx;
+    border-radius: 16rpx;
+  }
+}
+.product-copy {
+  flex: 1;
+  min-width: 0;
+}
+.product-name,
+.store-name {
+  color: $qs-font-title;
+  font-size: 27rpx;
+  font-weight: 500;
+}
+.muted {
+  display: block;
+  margin-top: 12rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  line-height: 1.8;
+}
+.info-row {
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  color: $qs-font-dec;
+}
+.info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  color: $qs-font-body;
+}
+.store-name {
+  display: block;
+  margin-top: 24rpx;
+}
+.fulfillment-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 24rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+  font-size: 22rpx;
+  line-height: 1.8;
+  .iconfont {
+    flex: none;
+    font-size: 28rpx;
+  }
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 30rpx;
+}
+.result-page .primary-button,
+.result-page .secondary-button {
+  width: 100%;
+  padding: 22rpx;
+  border-radius: 40rpx;
+  font-size: 27rpx;
+}
+.result-page .primary-button {
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+}
+.result-page .secondary-button {
+  background: $qs-card-bg;
+  border: 1rpx solid $qs-border;
+  color: $qs-brandColor;
+}
+.result-page .home-button {
+  padding: 12rpx;
+  color: $qs-font-dec;
+  font-size: 23rpx;
+  .iconfont {
+    margin-left: 8rpx;
+    font-size: 20rpx;
+  }
+}
+.preview-note {
+  display: block;
+  margin-top: 22rpx;
+  color: $qs-font-dec2;
+  text-align: center;
+  font-size: 21rpx;
+  line-height: 1.8;
+}
+.empty-state {
+  padding: 100rpx 24rpx;
+  text-align: center;
+  color: $qs-font-dec;
+  button {
+    margin-top: 24rpx;
+    color: $qs-brandColor;
+  }
+}
