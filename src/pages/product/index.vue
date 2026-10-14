@@ -1,50 +1,82 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { mockFlowers, mockStores } from '../index/mock-data'
-import { readStock } from '@/services/preview-stock'
+import { getSelectedStore, getStore, getProduct } from '@/pages/stores/shop-data'
+import type { ShopProduct } from '@/types/shop'
+import type { FlowerStore } from '@/types/store'
 
 // 当前查看的普通鲜花标识。
-const productId = ref(mockFlowers[0].id)
+const productId = ref('')
+const source = ref<ShopProduct>()
+const specId = ref('')
+const selectedSpec = computed(() => source.value?.specs.find((spec) => spec.id === specId.value))
+const loading = ref(false)
+const failed = ref(false)
+let loadVersion = 0
+async function loadProduct() {
+  const version = ++loadVersion
+  loading.value = true
+  failed.value = false
+  source.value = undefined
+  store.value = undefined
+  try {
+    const selectedStore = storeId.value ? await getStore(storeId.value) : await getSelectedStore()
+    if (!selectedStore) return
+    const item = await getProduct(selectedStore.id, productId.value)
+    if (version !== loadVersion) return
+    storeId.value = selectedStore.id
+    store.value = selectedStore
+    source.value = item
+    if (!item.specs.some((spec) => spec.id === specId.value))
+      specId.value = item.specs.find((spec) => spec.available > 0)?.id || item.specs[0]?.id || ''
+    if (!item.methods.includes(method.value)) method.value = item.methods[0] || 'pickup'
+    quantity.value = Math.min(quantity.value, maxQuantity.value)
+  } catch { if (version === loadVersion) failed.value = true }
+  finally { if (version === loadVersion) loading.value = false }
+}
+function selectSpec(id: string) {
+  specId.value = id
+  quantity.value = Math.min(quantity.value, maxQuantity.value)
+}
 // 用户选择的购买份数。
 const quantity = ref(1)
 // 当前收花方式。
 const method = ref<'pickup' | 'delivery'>('pickup')
-// 当前展示的模拟商品。
-const product = computed(() => mockFlowers.find((item) => item.id === productId.value))
-// 当前门店信息，首页直接进入时尚未选择门店。
+// 当前规格对应的真实商品展示数据。
+const product = computed(() => source.value && ({ ...source.value,
+  price: selectedSpec.value?.price ?? 0, specification: selectedSpec.value?.name ?? '', unit: selectedSpec.value?.unit ?? '',
+}))
+// 当前门店标识，未传入时读取上次选择或首家营业门店。
 const storeId = ref('')
-// 当前选择的模拟门店。
-const store = computed(() => mockStores.find((item) => item.id === storeId.value))
-// 当前规格的模拟可售数量，未选门店时不展示库存。
-const stocks = ref<Record<string, Record<string, number>>>({})
+// 当前选择的真实门店。
+const store = ref<FlowerStore>()
 // 当前门店当前商品的可售数量。
-const stock = computed(() => stocks.value[storeId.value]?.[productId.value])
-// 数量上限，未选门店时最多预选99份。
-const maxQuantity = computed(() => Math.max(1, stock.value ?? 99))
-// 商品详情图预览，暂复用商品素材，后续替换为后台详情图。
-const detailImages = computed(() => (product.value ? [product.value.image] : []))
-// 商品金额，仅用于前端预览。
+const stock = computed(() => selectedSpec.value?.available ?? 0)
+// 数量不超过选中规格的可售库存。
+const maxQuantity = computed(() => Math.max(1, stock.value))
+// 使用后台详情图，未配置时展示商品封面。
+const detailImages = computed(() => source.value?.images.length ? source.value.images : product.value ? [product.value.image] : [])
+// 展示选中规格的小计，正式下单金额后续由报价接口确认。
 const subtotal = computed(() => (product.value?.price || 0) * quantity.value)
 // 当前是否可以继续购买。
 const canBuy = computed(
   () =>
-    Boolean(product.value) &&
-    (!store.value || (store.value.open && (stock.value || 0) >= quantity.value)),
+    !loading.value && Boolean(product.value && selectedSpec.value) &&
+    Boolean(store.value?.open) && stock.value >= quantity.value && Boolean(product.value?.methods.includes(method.value)),
 )
 
 // 根据入口参数初始化商品、门店和收花方式。
 onLoad((options) => {
   if (options?.id) productId.value = options.id
   if (options?.storeId) storeId.value = options.storeId
-  if (options?.method === 'delivery' && product.value?.methods.includes('delivery'))
+  if (options?.method === 'delivery')
     method.value = 'delivery'
 })
 // 返回商品页后刷新可售库存。
 onShow(() => {
-  stocks.value = readStock()
+  void loadProduct()
 })
-// 调整数量，不超过当前模拟库存。
+// 调整数量，不超过当前规格库存。
 function changeQuantity(step: number) {
   quantity.value = Math.max(1, Math.min(maxQuantity.value, Number(quantity.value) + step))
 }
@@ -64,7 +96,8 @@ function chooseStore() {
       // 更新门店并将数量限制在新门店库存内。
       storeSelected: (id: string) => {
         storeId.value = id
-        quantity.value = Math.min(quantity.value, maxQuantity.value)
+        quantity.value = 1
+        void loadProduct()
       },
     },
   })
@@ -73,13 +106,11 @@ function chooseStore() {
 function changeMethod(value: 'pickup' | 'delivery') {
   if (product.value?.methods.includes(value)) method.value = value
 }
-// 携带商品、数量和门店进入确认订单页。
+// 真实订单接口接入前，避免进入旧的模拟支付流程。
 function buyNow() {
   if (!canBuy.value) return
   if (!store.value) return chooseStore()
-  uni.navigateTo({
-    url: `/pages/checkout/index?id=${productId.value}&storeId=${storeId.value}&quantity=${quantity.value}&method=${method.value}`,
-  })
+  uni.navigateTo({ url: `/pages/checkout/index?id=${productId.value}&storeId=${storeId.value}&specId=${specId.value}&quantity=${quantity.value}&method=${method.value}` })
 }
 // 返回下单页继续选花和选择门店。
 function goShopping() {
@@ -105,16 +136,17 @@ function goShopping() {
         <text class="subtitle">{{ product.description }}</text>
         <view class="summary-tags">
           <text>门店散花</text>
-          <text>{{ product.methods.includes('delivery') ? '自取 / 配送' : '仅支持自取' }}</text>
+          <text>{{ product.methods.map(item => item === 'pickup' ? '自取' : '配送').join(' / ') }}</text>
         </view>
       </view>
       <view class="panel">
         <text class="section-title">选一份心意</text>
         <view class="field">
           <text class="field-label">商品规格</text>
-          <view class="specification selected">
-            <text>{{ product.specification }}</text>
-            <text class="spec-unit">每{{ product.unit }}</text>
+          <view class="method-options">
+            <button v-for="spec in product.specs" :key="spec.id" :class="{ selected: specId === spec.id }" @click="selectSpec(spec.id)">
+              {{ spec.name }} · ¥{{ spec.price.toFixed(2) }} / {{ spec.unit }}{{ spec.available === 0 ? ' · 售罄' : '' }}
+            </button>
           </view>
         </view>
         <view class="quantity-row">
@@ -145,7 +177,7 @@ function goShopping() {
         <view class="field">
           <text class="field-label">收花方式</text>
           <view class="method-options">
-            <button :class="{ selected: method === 'pickup' }" @click="changeMethod('pickup')">
+            <button :class="{ selected: method === 'pickup' }" :disabled="!product.methods.includes('pickup')" @click="changeMethod('pickup')">
               <text class="iconfont icon-shouye1" />
               门店自取
             </button>
@@ -210,7 +242,7 @@ function goShopping() {
         <text class="tips">自取请留意门店营业时间；配送地址需在门店服务区域内。</text>
         <text class="tips">优惠券可在确认订单时选择，每单限用一张，不抵配送费。</text>
       </view>
-      <text class="demo-note">图片、价格及库存均为演示素材</text>
+      <text class="demo-note">商品、价格及库存以所选门店当前配置为准</text>
     </view>
     <view class="purchase-bar">
       <view>
@@ -226,7 +258,9 @@ function goShopping() {
     </view>
   </view>
   <view v-else class="empty-state">
-    <text>暂未找到这款鲜花</text>
+    <text>{{ loading ? '正在加载商品…' : failed ? '商品加载失败，或本店暂未上架' : '暂无可选门店或商品' }}</text>
+    <button v-if="failed" @click="loadProduct">重新加载</button>
+    <button @click="chooseStore">选择其他门店</button>
     <button @click="goShopping">去挑选其他鲜花</button>
   </view>
 </template>

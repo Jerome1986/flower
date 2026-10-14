@@ -1,5 +1,4 @@
-import type { PreviewOrder } from '../pages/checkout/preview-order'
-
+import type { PreviewOrder } from '@/types/order'
 // 统一读取模拟订单，兼容旧版最近订单。
 export function readOrders(): PreviewOrder[] {
   // 本地订单历史。
@@ -34,6 +33,8 @@ export function createOrder(order: PreviewOrder) {
 }
 // 统一普通订单和平台订单的状态名称。
 export function orderStatus(order: PreviewOrder) {
+  if (order.status === 'unpaid') return '已下单 · 未付款'
+  if (order.status === 'cancelled') return order.backendStatus === 'CLOSED' ? '已关闭' : '已取消'
   if (order.status === 'completed') return '已完成'
   if (order.status === 'delivering') return '配送中'
   if (order.type === 'custom')
@@ -43,6 +44,9 @@ export function orderStatus(order: PreviewOrder) {
 }
 // 用户详情标题，按状态逐项判断便于修改。
 export function orderTitle(order: PreviewOrder) {
+  if (order.status === 'unpaid') return '订单已创建'
+  if (order.status === 'cancelled')
+    return order.backendStatus === 'CLOSED' ? '订单已关闭' : '订单已取消'
   if (order.status === 'completed') return '鲜花订单已完成'
   if (order.status === 'delivering') return '鲜花正在配送'
   if (order.type === 'custom')
@@ -53,6 +57,8 @@ export function orderTitle(order: PreviewOrder) {
 }
 // 订单列表与详情共用履约提示。
 export function orderHint(order: PreviewOrder) {
+  if (order.status === 'unpaid') return '订单尚未付款'
+  if (order.status === 'cancelled') return '订单已结束，预留库存已释放'
   if (order.status === 'completed') return '这份心意已送达，感谢你让鲜花走进日常'
   if (order.status === 'delivering') return '请保持电话畅通，耐心等待鲜花送达'
   if (order.type === 'custom') return '平台将安排合作方制作配送'
@@ -62,10 +68,18 @@ export function orderHint(order: PreviewOrder) {
       : '花店即将安排配送，请保持电话畅通'
   return order.status === 'preparing'
     ? '每一束心意都在认真准备，请耐心等待'
-    : '支付已成功，花店接单后将为你准备鲜花'
+    : '门店已收到订单，将为你准备鲜花'
+}
+export function orderPaymentLabel(order: PreviewOrder) {
+  if (order.paymentStatus === 'PAID') return '已付款'
+  if (order.paymentStatus === 'NOT_REQUIRED') return '0元订单，无需付款'
+  if (order.paymentStatus === 'CLOSED') return '未付款 · 已关闭'
+  return '未付款'
 }
 // 用户和店长共享完整履约步骤。
 export function orderStages(order?: PreviewOrder | null) {
+  if (order?.status === 'unpaid') return ['已下单', '未付款']
+  if (order?.status === 'cancelled') return [order.backendStatus === 'CLOSED' ? '已关闭' : '已取消']
   if (order?.type === 'custom') return ['待派单', '已派单', '配送中', '已完成']
   return order?.method === 'delivery'
     ? ['待接单', '备货中', '待配送', '配送中', '已完成']
@@ -99,7 +113,7 @@ export function advanceOrder(
     content: pickup ? '' : `确认执行${orderAction(current)}？`,
     editable: pickup,
     placeholderText: pickup ? '请输入用户出示的取货码' : '',
-    confirmColor: '#32845b',
+    confirmColor: '#eed261',
     success: (result) => {
       if (!result.confirm) return
       // 弹窗期间其他页面可能修改订单，旧操作不重复执行。

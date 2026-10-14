@@ -1,29 +1,12 @@
+
+import type { Fulfillment, FlowerProduct } from '@/types/product'
+import type { FlowerStore } from '@/types/store'
 // 门店履约方式。
-export type Fulfillment = 'pickup' | 'delivery'
+
 // 模拟门店结构。
-export interface FlowerStore {
-  id: string
-  name: string
-  address: string
-  hours: string
-  phone: string
-  open: boolean
-  deliveryArea: string
-  deliveryFee: number
-  stock: Record<string, number>
-}
+
 // 模拟商品结构。
-export interface FlowerProduct {
-  id: string
-  type: 'A' | 'B'
-  name: string
-  image: string
-  description: string
-  specification: string
-  unit: string
-  price: number
-  methods: Fulfillment[]
-}
+
 // 首页文案与活动配置。
 export const homeContent = {
   title: '把日常，过成\n花开的样子',
@@ -77,7 +60,6 @@ export const mockStores: FlowerStore[] = [
 export const mockFlowers: FlowerProduct[] = [
   {
     id: 'tulip',
-    type: 'A',
     name: '郁金香',
     image: '/static/home/tulip.jpg',
     description: '温柔的色彩，让每一天都有一点春意。花色以门店实际供应为准。',
@@ -88,7 +70,6 @@ export const mockFlowers: FlowerProduct[] = [
   },
   {
     id: 'rose',
-    type: 'A',
     name: '玫瑰',
     image: '/static/home/rose.jpg',
     description: '把喜欢藏进花里，送给自己，也送给想念的人。',
@@ -99,7 +80,6 @@ export const mockFlowers: FlowerProduct[] = [
   },
   {
     id: 'sunflower',
-    type: 'A',
     name: '向日葵',
     image: '/static/home/sunflower.jpg',
     description: '向着阳光生长，为日常添一份明亮。',
@@ -113,7 +93,6 @@ export const mockFlowers: FlowerProduct[] = [
 export const mockBouquets: FlowerProduct[] = [
   {
     id: 'chenyu',
-    type: 'B',
     name: '沉鱼',
     image: '/static/home/chenyu.jpg',
     description: '浅色包装与粉色花束，适合把温柔送给重要的人。固定成品款式，由平台安排制作配送。',
@@ -124,7 +103,6 @@ export const mockBouquets: FlowerProduct[] = [
   },
   {
     id: 'luoyan',
-    type: 'B',
     name: '落雁',
     image: '/static/home/luoyan.jpg',
     description: '丰富花色组成的一束心意。固定成品款式，由平台安排制作配送。',
@@ -135,7 +113,6 @@ export const mockBouquets: FlowerProduct[] = [
   },
   {
     id: 'biyue',
-    type: 'B',
     name: '闭月',
     image: '/static/home/biyue.jpg',
     description: '把特别的祝福交给鲜花。固定成品款式，由平台安排制作配送。',

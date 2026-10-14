@@ -1,5 +1,5 @@
-import { mockStores } from '../pages/index/mock-data'
-import { readOrders } from './preview-orders'
+import { mockStores } from '@/pages/index/mock-data'
+import { readOrders } from '@/pages/orders/preview-orders'
 
 // 从初始库存减去已确认普通订单，模拟各门店独立库存。
 export function readStock(): Record<string, Record<string, number>> {

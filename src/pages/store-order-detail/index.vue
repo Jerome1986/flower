@@ -1,69 +1,83 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import type { PreviewOrder } from '@/types/order'
+import { computed, ref, watch } from 'vue'
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
-import type { PreviewOrder } from '../checkout/preview-order'
-import {
-  findOrder,
-  orderStages,
-  orderStageIndex,
-  orderAction,
-  advanceOrder as advancePreviewOrder,
-} from '@/services/preview-orders'
-
-// 当前测试账户，只有店长可处理普通订单。
+import { getCurrentUserApi as getCurrentUser } from '@/api/user'
+import { toProfile } from '@/pages/test-login/user-profile'
+import { getManageOrder, manageAction, performAction, orderActionLabels } from '@/pages/store-orders/order-actions'
+import { orderStages, orderStageIndex, orderStatus } from '@/pages/orders/order-display'
 const userStore = useUserStore()
-// 当前详情的订单编号。
 const orderNo = ref('')
-// 当前普通模拟订单。
 const order = ref<PreviewOrder | null>(null)
-// 店长身份判断，流程测试不验证门店归属。
-const isManager = computed(() => userStore.profile?.role === 'manager')
-// 当前订单的进度步骤，配送区分已备货与配送中。
+const loading = ref(false)
+const failed = ref(false)
+const busy = ref(false)
+let requestVersion = 0
+onUnload(() => {
+  requestVersion++
+})
+watch(
+  () => userStore.token,
+  () => {
+    requestVersion++
+    order.value = null
+    loading.value = false
+    busy.value = false
+  },
+  { flush: 'sync' },
+)
+const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === 'manager')
 const stages = computed(() => orderStages(order.value))
-// 当前高亮的履约步骤。
 const stageIndex = computed(() => orderStageIndex(order.value))
-// 当前状态的名称。
-const statusTitle = computed(() => stages.value[stageIndex.value])
-// 下一步操作按钮名称。
-const actionLabel = computed(() => (order.value ? orderAction(order.value) : ''))
-// 兼容旧订单的商品金额。
-const productAmount = computed(() => order.value?.productAmount ?? order.value?.total ?? 0)
-
-// 读取入口传入的订单编号。
+const statusTitle = computed(() => (order.value ? orderStatus(order.value) : ''))
+const actionLabel = computed(() => (order.value ? manageAction(order.value)?.label || '' : ''))
+const productAmount = computed(() => order.value?.productAmount || 0)
 onLoad((options) => {
   orderNo.value = options?.orderNo || ''
 })
-// 返回详情时刷新当前订单状态。
-onShow(loadOrder)
-
-// 加载指定普通订单，不展示平台定制单。
-function loadOrder() {
-  if (!isManager.value) {
-    order.value = null
-    return
+onShow(() => {
+  void loadOrder()
+})
+async function loadOrder() {
+  const version = ++requestVersion
+  const token = userStore.token
+  order.value = null
+  if (!token || !orderNo.value) return
+  loading.value = true
+  failed.value = false
+  try {
+    const { data } = await getCurrentUser()
+    if (version !== requestVersion || token !== userStore.token) return
+    userStore.setProfile(toProfile(data))
+    if (isManager.value) {
+      const result = await getManageOrder(orderNo.value)
+      if (version === requestVersion && token === userStore.token && result.type === 'ordinary')
+        order.value = result
+    }
+  } catch {
+    if (version === requestVersion) failed.value = true
+  } finally {
+    if (version === requestVersion) loading.value = false
   }
-  // 本次请求查看的订单。
-  const found = findOrder(orderNo.value)
-  order.value = found?.type !== 'custom' ? found : null
 }
-// 推进模拟订单，自取完成需验证取货码。
-function advanceOrder() {
-  loadOrder()
-  if (!order.value || !actionLabel.value) return
-  advancePreviewOrder(order.value.orderNo, userStore.profile?.storeId || '', (updated) => {
-    order.value = updated
-  })
+async function advanceOrder(cancel = false) {
+  if (busy.value || !order.value) return
+  const token = userStore.token
+  busy.value = true
+  try {
+    await performAction(order.value, cancel)
+    if (token === userStore.token) await loadOrder()
+  } finally {
+    if (token === userStore.token) busy.value = false
+  }
 }
-// 联系订单中的收货人。
 function contactCustomer() {
   if (order.value) uni.makePhoneCall({ phoneNumber: order.value.phone })
 }
-// 复制当前订单编号。
 function copyOrderNo() {
   if (order.value) uni.setClipboardData({ data: order.value.orderNo })
 }
-// 返回店长管理列表。
 function goOrders() {
   uni.redirectTo({ url: '/pages/store-orders/index' })
 }
@@ -115,7 +129,6 @@ function goOrders() {
               : '备货完成后生成取货码'
           }}
         </text>
-        <text v-if="order.status === 'ready'" class="pickup-code">{{ order.pickupCode }}</text>
         <text class="muted">
           {{
             order.status === 'completed'
@@ -148,7 +161,7 @@ function goOrders() {
         <text class="discount">−¥{{ (order.discount || 0).toFixed(2) }}</text>
       </view>
       <view class="amount-row total-row">
-        <text>实付金额</text>
+        <text>订单金额</text>
         <text class="price">¥{{ order.total.toFixed(2) }}</text>
       </view>
     </view>
@@ -167,20 +180,45 @@ function goOrders() {
       </view>
       <view class="info-row">
         <text>支付状态</text>
-        <text class="info-value">{{ order.total === 0 ? '0元确认成功' : '模拟支付成功' }}</text>
+        <text class="info-value">{{
+          order.paymentStatus === 'NOT_REQUIRED' && order.total > 0
+            ? '支付待接入'
+            : order.paymentStatus
+        }}</text>
       </view>
     </view>
-    <text class="demo-note">流程测试暂不验证门店归属，操作同步到用户订单</text>
+    <view class="panel"
+      ><text class="section-title">操作记录</text
+      ><view v-for="(log, index) in order.logs" :key="index" class="info-row"
+        ><text>{{ orderActionLabels[log.action] || log.action }}</text
+        ><text class="muted">{{ log.createdAt }}</text></view
+      ></view
+    >
+    <text class="demo-note">仅允许操作负责门店的订单，状态同步到用户端</text>
     <view class="action-bar">
       <button class="contact-button" @click="contactCustomer">联系客户</button>
-      <button v-if="actionLabel" class="shopping-button" @click="advanceOrder">
+      <button
+        v-if="actionLabel"
+        :disabled="busy"
+        class="shopping-button"
+        @click="advanceOrder(false)"
+      >
         {{ actionLabel }}
       </button>
       <button v-else class="contact-button" @click="goOrders">返回订单列表</button>
     </view>
   </view>
   <view v-else class="empty-state">
-    <text>{{ isManager ? '暂无可查看的普通订单' : '请先使用店长身份登录' }}</text>
+    <text>{{
+      loading
+        ? '正在加载…'
+        : failed
+        ? '加载失败或无权查看订单'
+        : isManager
+        ? '暂无可查看的普通订单'
+        : '请先使用店长身份登录'
+    }}</text>
+    <button v-if="failed" @click="loadOrder">重新加载</button>
     <button @click="goOrders">返回订单管理</button>
   </view>
 </template>

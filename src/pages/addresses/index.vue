@@ -1,123 +1,146 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import type { Address } from '@/types/address'
+import { computed, ref, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { readAddresses, saveAddresses, type Address } from './address-data'
 import { useUserStore } from '@/stores/modules/user'
-
-// 当前用户账户，地址按账户保存。
+import { useResource } from '@/composables/use-resource'
+import {
+  getAddresses,
+  saveAddress as saveRemote,
+  deleteAddress as deleteRemote,
+  setDefaultAddress,
+} from '@/pages/addresses/address-actions'
+import { integrationMessage } from '@/utils/integration'
 const userStore = useUserStore()
-// 是否从确认订单进入地址选择模式。
+const resource = useResource(getAddresses)
+const addresses = computed(() => resource.data.value || [])
+const loading = resource.loading
+const message = resource.message
+const pending = resource.pending
 const selectionMode = ref(false)
-// 当前订单已选地址的标识。
 const selectedId = ref('')
-// 已保存的本地地址列表。
-const addresses = ref<Address[]>([])
-// 是否展示地址编辑表单。
 const showEditor = ref(false)
-// 当前编辑地址的标识，空值表示新增。
 const editingId = ref('')
-// 收货人姓名。
 const name = ref('')
-// 收货手机号。
 const phone = ref('')
-// 收货省、市、区。
-const region = ref('')
-// 街道、楼栋和门牌号。
+const province = ref('')
+const city = ref('')
+const district = ref('')
+const originalRegionCode = ref<string | null>(null)
+let originalRegion = ''
 const detail = ref('')
-// 当前表单是否设为默认地址。
 const isDefault = ref(false)
-// 编辑表单标题。
+const busy = ref(false)
+const mutationError = ref('')
 const editorTitle = computed(() => (editingId.value ? '编辑收货地址' : '新增收货地址'))
-
-// 读取本地地址，刷新后仍保留编辑结果。
-// 读取来源页面的地址选择参数。
 onLoad((options) => {
   selectionMode.value = options?.select === '1'
   selectedId.value = options?.selectedId || ''
   if (selectionMode.value) uni.setNavigationBarTitle({ title: '选择收货地址' })
 })
-
-onShow(() => {
-  addresses.value = readAddresses(
-    userStore.profile?.role === 'user' ? userStore.profile.id : undefined,
-  )
-})
-// 将所选地址传回确认订单页面。
-function selectAddress(address: Address) {
-  // 当前地址页面与来源页面的通信通道。
-  const page = getCurrentPages()[getCurrentPages().length - 1]
-  page.getOpenerEventChannel().emit('addressSelected', address)
+onShow(resource.load)
+watch(
+  () => userStore.token,
+  () => {
+    showEditor.value = false
+    busy.value = false
+    mutationError.value = ''
+    name.value = ''
+    phone.value = ''
+    province.value = ''
+    city.value = ''
+    district.value = ''
+    originalRegionCode.value = null
+    originalRegion = ''
+    detail.value = ''
+  },
+  { flush: 'sync' },
+)
+function login() {
+  uni.navigateTo({
+    url:
+      '/pages/test-login/index?returnUrl=' +
+      encodeURIComponent('/pages/addresses/index' + (selectionMode.value ? '?select=1' : '')),
+  })
+}
+function selectAddress(item: Address) {
+  if (!selectionMode.value || !userStore.token || busy.value) return
+  const pages = getCurrentPages()
+  pages[pages.length - 1].getOpenerEventChannel().emit('addressSelected', item)
   uni.navigateBack()
 }
-// 保存地址列表到本地，后续替换为接口。
-function persistAddresses() {
-  if (userStore.profile?.role === 'user') saveAddresses(userStore.profile.id, addresses.value)
-}
-// 打开新增或编辑表单。
-function openEditor(address?: Address) {
-  if (userStore.profile?.role !== 'user')
-    return uni.navigateTo({ url: '/pages/test-login/index?returnUrl=%2Fpages%2Faddresses%2Findex' })
-  editingId.value = address?.id || ''
-  name.value = address?.name || ''
-  phone.value = address?.phone || ''
-  region.value = address?.region || ''
-  detail.value = address?.detail || ''
-  isDefault.value = address?.isDefault || !addresses.value.length
+function openEditor(item?: Address) {
+  if (!userStore.token) return login()
+  if (busy.value || loading.value || pending.value || !resource.data.value) return
+  editingId.value = item?.id || ''
+  name.value = item?.name || ''
+  phone.value = item?.phone || ''
+  province.value = item?.province || ''
+  city.value = item?.city || ''
+  district.value = item?.district || ''
+  originalRegion = [province.value, city.value, district.value].join(' ')
+  originalRegionCode.value = item?.regionCode || null
+  detail.value = item?.detail || ''
+  isDefault.value = item?.isDefault || !addresses.value.length
+  mutationError.value = ''
   showEditor.value = true
 }
-// 关闭表单，不保存本次修改。
 function closeEditor() {
-  showEditor.value = false
+  if (!busy.value) showEditor.value = false
 }
-// 切换表单默认地址选项。
 function toggleDefault() {
-  isDefault.value = !isDefault.value
+  if (!busy.value) isDefault.value = !isDefault.value
 }
-// 校验输入并保存本地地址。
-function saveAddress() {
+async function mutate(action: () => Promise<unknown>, close = false) {
+  if (busy.value || !userStore.token) return
+  const token = userStore.token
+  busy.value = true
+  mutationError.value = ''
+  try {
+    await action()
+    if (token !== userStore.token) return
+    if (close) showEditor.value = false
+    uni.showToast({ title: '操作成功', icon: 'success' })
+    await resource.load()
+  } catch (error) {
+    if (token === userStore.token)
+      mutationError.value = integrationMessage(error, '保存失败，请重试')
+  } finally {
+    if (token === userStore.token) busy.value = false
+  }
+}
+async function saveAddress() {
   if (!name.value.trim()) return uni.showToast({ title: '请填写收货人', icon: 'none' })
   if (!/^1\d{10}$/.test(phone.value))
     return uni.showToast({ title: '请填写正确的手机号', icon: 'none' })
-  if (!region.value.trim() || !detail.value.trim())
+  if (![province.value, city.value, district.value, detail.value].every((value) => value.trim()))
     return uni.showToast({ title: '请填写完整地址', icon: 'none' })
-  // 当前需要保存的地址快照。
-  const address: Address = {
-    id: editingId.value || `address-${Date.now()}`,
+  const input = {
     name: name.value.trim(),
     phone: phone.value,
-    region: region.value.trim(),
+    province: province.value.trim(),
+    city: city.value.trim(),
+    district: district.value.trim(),
+    regionCode:
+      [province.value.trim(), city.value.trim(), district.value.trim()].join(' ') === originalRegion
+        ? originalRegionCode.value || ''
+        : '',
     detail: detail.value.trim(),
     isDefault: isDefault.value,
   }
-  // 更新已有地址或追加新增地址。
-  const next = addresses.value
-    .filter((item) => item.id !== address.id)
-    .map((item) => ({ ...item, isDefault: address.isDefault ? false : item.isDefault }))
-  next.push(address)
-  if (!next.some((item) => item.isDefault)) next[0].isDefault = true
-  addresses.value = next
-  persistAddresses()
-  closeEditor()
-  uni.showToast({ title: '地址已保存', icon: 'success' })
+  await mutate(() => saveRemote(editingId.value, input), true)
 }
-// 将指定地址设置为唯一默认地址。
-function setDefault(id: string) {
-  addresses.value = addresses.value.map((item) => ({ ...item, isDefault: item.id === id }))
-  persistAddresses()
+async function setDefault(id: string) {
+  await mutate(() => setDefaultAddress(id))
 }
-// 确认后删除指定地址，并保留一个默认地址。
 function deleteAddress(id: string) {
+  if (busy.value) return
+  const token = userStore.token
   uni.showModal({
     title: '删除地址',
     content: '确定删除这个收货地址吗？',
-    confirmText: '删除',
-    confirmColor: '#32845b',
     success: (result) => {
-      if (!result.confirm) return
-      addresses.value = addresses.value.filter((item) => item.id !== id)
-      if (addresses.value.length && !addresses.value.some((item) => item.isDefault))
-        addresses.value[0].isDefault = true
-      persistAddresses()
+      if (result.confirm && token === userStore.token) void mutate(() => deleteRemote(id))
     },
   })
 }
@@ -130,7 +153,12 @@ function deleteAddress(id: string) {
       <text class="page-title">我的收花地址</text>
       <text class="subtitle">存好常用地址，下一次收花更轻松</text>
     </view>
-    <view v-if="addresses.length" class="address-list">
+    <view v-if="loading || message" class="empty-state"
+      ><text>{{ loading ? '正在加载地址…' : message }}</text
+      ><button v-if="!loading && !pending && userStore.token" @click="resource.load">重试</button
+      ><button v-if="!userStore.token" @click="login">登录</button></view
+    >
+    <view v-else-if="addresses.length" class="address-list">
       <view
         v-for="address in addresses"
         :key="address.id"
@@ -164,9 +192,14 @@ function deleteAddress(id: string) {
       <text class="empty-title">还没有收花地址</text>
       <text class="subtitle">添加一个地址，让鲜花来到你身边</text>
     </view>
-    <text class="demo-note">地址保存在本地，供前端交互预览</text>
+    <text class="demo-note">地址保存到当前账户；配送是否可达以门店服务区域为准</text>
+    <text v-if="mutationError" class="demo-note">{{ mutationError }}</text>
     <view class="bottom-bar">
-      <button class="add-button" @click="openEditor()">
+      <button
+        class="add-button"
+        :disabled="loading || pending || busy || (!!userStore.token && !resource.data.value)"
+        @click="openEditor()"
+      >
         <text class="iconfont icon-jiahao" />
         新增收货地址
       </button>
@@ -180,19 +213,42 @@ function deleteAddress(id: string) {
         <scroll-view class="editor-body" scroll-y>
           <view class="form-row">
             <text>收货人</text>
-            <input v-model="name" placeholder="请填写收货人姓名" maxlength="20" />
+            <input :disabled="busy" v-model="name" placeholder="请填写收货人姓名" :maxlength="64" />
           </view>
           <view class="form-row">
             <text>手机号</text>
-            <input v-model="phone" placeholder="请填写联系电话" type="number" maxlength="11" />
+            <input
+              :disabled="busy"
+              v-model="phone"
+              placeholder="请填写联系电话"
+              type="number"
+              :maxlength="11"
+            />
           </view>
-          <view class="form-row">
-            <text>省市区</text>
-            <input v-model="region" placeholder="如：浙江省 杭州市 西湖区" maxlength="60" />
-          </view>
+          <view class="form-row"
+            ><text>省份 / 直辖市</text
+            ><input v-model="province" :disabled="busy" placeholder="如：浙江省" :maxlength="64"
+          /></view>
+          <view class="form-row"
+            ><text>城市</text
+            ><input
+              v-model="city"
+              :disabled="busy"
+              placeholder="如：杭州市（直辖市填市名）"
+              :maxlength="64"
+          /></view>
+          <view class="form-row"
+            ><text>区 / 县</text
+            ><input v-model="district" :disabled="busy" placeholder="如：西湖区" :maxlength="64"
+          /></view>
           <view class="detail-field">
             <text>详细地址</text>
-            <textarea v-model="detail" placeholder="街道、楼栋及门牌号" maxlength="150" />
+            <textarea
+              :disabled="busy"
+              v-model="detail"
+              placeholder="街道、楼栋及门牌号"
+              :maxlength="500"
+            />
           </view>
           <button class="default-toggle" @click="toggleDefault">
             <text>设为默认收货地址</text>
@@ -200,7 +256,10 @@ function deleteAddress(id: string) {
           </button>
           <text class="form-hint">配送是否可达，以所选门店的服务区域为准</text>
         </scroll-view>
-        <button class="save-button" @click="saveAddress">保存地址</button>
+        <text v-if="mutationError" class="form-hint">{{ mutationError }}</text>
+        <button class="save-button" :loading="busy" :disabled="busy" @click="saveAddress">
+          保存地址
+        </button>
       </view>
     </view>
   </view>

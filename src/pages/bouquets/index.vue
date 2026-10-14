@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { mockBouquets } from '../index/mock-data'
+import { computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { getBouquetsApi as getBouquets } from '@/api/bouquets'
+import { useResource } from '@/composables/use-resource'
 
-// 专区展示的模拟成品花束，不依赖门店库存。
-const bouquets = mockBouquets
+// 专区数据来自独立花束服务。
+const resource = useResource(getBouquets, false)
+const bouquets = computed(() => resource.data.value || [])
+const loading = resource.loading
+const message = resource.message
+const pending = resource.pending
+onShow(resource.load)
 
 // 统一展示花束价格。
 function formatPrice(amount: number) {
@@ -28,6 +36,11 @@ function viewBouquet(id: string) {
         <text class="service-copy">无需选择门店，为重要的时刻送上心意</text>
       </view>
     </view>
+    <view v-if="loading || message" class="tips-panel"
+      ><text>{{ loading ? '正在加载花束…' : message }}</text
+      ><button v-if="!loading && !pending" @click="resource.load">重试</button></view
+    >
+    <view v-else-if="!bouquets.length" class="tips-panel"><text>暂无上架花束</text></view>
     <view class="bouquet-list">
       <view
         v-for="(bouquet, index) in bouquets"
@@ -75,7 +88,7 @@ function viewBouquet(id: string) {
     </view>
     <view class="page-footer">
       <text>一束鲜花，一份特别的心意</text>
-      <text class="demo-note">图片与价格均为演示素材</text>
+      <text class="demo-note">商品、价格及配送信息以开放后展示为准</text>
     </view>
   </view>
 </template>

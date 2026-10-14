@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import type { Coupon, CouponStatus } from '@/types/coupon'
 import { computed, ref } from 'vue'
 import { onShow, onHide, onUnload } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
-import { readCoupons, type Coupon } from './coupon-data'
+import { getWalletApi as getWallet } from '@/api/marketing'
+import { couponCheckoutEnabled } from '@/pages/checkout/coupon-config'
+import { useResource } from '@/composables/use-resource'
 
-// 当前模拟账户，用于展示该账户已发放的新人券。
+// 数据以当前账户的服务端响应为准。
 const userStore = useUserStore()
 
-// 优惠券展示状态。
-type CouponStatus = Coupon['status']
 // 当前卡包筛选状态。
 const activeTab = ref<CouponStatus>('available')
 // 卡包状态分类。
@@ -20,8 +21,15 @@ const tabs: { id: CouponStatus; name: string }[] = [
 ]
 // 当前时间，供优惠券倒计时展示。
 const now = ref(Date.now())
-// 本地模拟优惠券数据。
-const coupons = ref<Coupon[]>([])
+// 数据以当前账户的服务端响应为准。
+const resource = useResource(getWallet)
+const coupons = computed(() => resource.data.value?.coupons || [])
+const loading = resource.loading
+const message = resource.message
+const pending = resource.pending
+function login() {
+  uni.navigateTo({ url: '/pages/test-login/index?returnUrl=%2Fpages%2Fcoupons%2Findex' })
+}
 // 倒计时刷新定时器。
 let timer: ReturnType<typeof setInterval> | undefined
 // 当前分类显示的优惠券。
@@ -37,7 +45,7 @@ function getStatus(coupon: Coupon): CouponStatus {
 onShow(() => {
   stopTimer()
   now.value = Date.now()
-  coupons.value = readCoupons(userStore.profile?.role === 'user' ? userStore.profile.id : undefined)
+  void resource.load()
   timer = setInterval(() => {
     now.value = Date.now()
   }, 1000)
@@ -69,30 +77,17 @@ function countdown(timestamp: number) {
   }分 ${seconds % 60}秒`
 }
 // 前往下单页挑选适用鲜花，实际券选择在确认订单页完成。
-function useCoupon(coupon: Coupon) {
-  uni.setStorageSync('flower-preferred-coupon', coupon.id)
-  if (coupon.type === 'exchange') {
-    uni.navigateTo({
-      url: `/pages/${coupon.productType === 'B' ? 'bouquet-detail' : 'product'}/index?id=${
-        coupon.productId || 'rose'
-      }`,
-    })
-    return
-  }
-  if (coupon.productType === 'B') {
-    uni.navigateTo({ url: '/pages/bouquets/index' })
-    return
-  }
+function useCoupon(_coupon: Coupon) {
+  if (!couponCheckoutEnabled) return uni.showToast({ title: '结算用券暂未开放', icon: 'none' })
   uni.switchTab({ url: '/pages/order/index' })
 }
 // 展示两类优惠券的使用说明。
 function showRules() {
   uni.showModal({
     title: '花礼使用说明',
-    content:
-      '现金券抵扣适用商品金额；兑换券用于指定商品、规格及数量。全门店通用，但仍须符合商品范围。每单限用一张，不抵配送费，不找零、不兑现。新人及邀请奖励券发放后5天有效。使用中的券由未支付订单占用，取消后释放；退款成功返还原券。',
+    content: resource.data.value?.rules || '花礼券暂未开放，活动规则将在开放后展示。',
     showCancel: false,
-    confirmColor: '#32845b',
+    confirmColor: '#eed261',
   })
 }
 </script>
@@ -120,6 +115,11 @@ function showRules() {
         {{ tab.name }}
       </button>
     </view>
+    <view v-if="loading || message" class="empty-state"
+      ><text>{{ loading ? '正在加载花礼券…' : message }}</text
+      ><button v-if="!loading && !pending && userStore.token" @click="resource.load">重试</button
+      ><button v-if="!userStore.token" @click="login">登录</button></view
+    >
     <view class="coupon-list">
       <view
         v-for="coupon in visibleCoupons"
@@ -141,7 +141,7 @@ function showRules() {
           <view class="coupon-copy">
             <text class="coupon-title">{{ coupon.title }}</text>
             <text class="scope">{{ coupon.scope }}</text>
-            <text class="source">{{ coupon.source }} · 全部门店通用</text>
+            <text class="source">{{ coupon.source }}</text>
           </view>
         </view>
         <view class="coupon-footer">
@@ -160,18 +160,23 @@ function showRules() {
               }}
             </text>
           </view>
-          <button v-if="activeTab === 'available'" class="use-button" @click="useCoupon(coupon)">
-            去使用
+          <button
+            v-if="activeTab === 'available'"
+            class="use-button"
+            :disabled="!couponCheckoutEnabled"
+            @click="useCoupon(coupon)"
+          >
+            {{ couponCheckoutEnabled ? '去选花' : '结算用券暂未开放' }}
           </button>
         </view>
       </view>
     </view>
-    <view v-if="!visibleCoupons.length" class="empty-state">
-      <UniIcons type="wallet" size="44" color="#32845b" />
+    <view v-if="!loading && !message && !visibleCoupons.length" class="empty-state">
+      <UniIcons type="wallet" size="44" color="#eed261" />
       <text>暂无{{ tabs.find((tab) => tab.id === activeTab)?.name }}花礼券</text>
       <text class="subtitle">每一份花礼，都值得好好珍惜</text>
     </view>
-    <text class="demo-note">当前为模拟卡包，供前端样式与交互预览</text>
+    <text class="demo-note">花礼券及使用规则以活动开放后的说明为准</text>
   </view>
 </template>
 

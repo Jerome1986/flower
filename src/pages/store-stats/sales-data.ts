@@ -1,8 +1,10 @@
-import type { PreviewOrder } from '../checkout/preview-order'
-export { readOrders as readSalesOrders } from '../../services/preview-orders'
+
+import type { PreviewOrder } from '@/types/order'
+import type { SalesPeriod } from '@/types/report'
+export { readOrders as readSalesOrders } from '../../pages/orders/preview-orders'
 
 // 销售统计支持的时间范围。
-export type SalesPeriod = 'today' | 'week' | 'month'
+
 // 兼容本地中文日期和新增核销时间的标准格式。
 function orderTime(value: string) {
   return new Date(

@@ -1,38 +1,65 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { homeContent, mockBouquets } from '../index/mock-data'
-
-// 当前查看的成品花束标识。
-const bouquetId = ref(mockBouquets[0].id)
-// 当前选择的购买束数。
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { getBouquetApi as getBouquet } from '@/api/bouquets'
+import { customCheckoutEnabled } from '@/pages/custom-checkout/bouquet-checkout'
+import { useResource } from '@/composables/use-resource'
+const bouquetId = ref('')
 const quantity = ref(1)
-// 当前展示的模拟成品花束。
-const bouquet = computed(() => mockBouquets.find((item) => item.id === bouquetId.value))
-// 商品合计金额，不包含配送费。
-const subtotal = computed(() => (bouquet.value?.price || 0) * quantity.value)
-// 花束详情图预览，后续替换为后台上传的长图。
-const detailImages = computed(() => (bouquet.value ? [bouquet.value.image] : []))
-
-// 接收专区传入的花束标识。
+const specId = ref('')
+const resource = useResource(() => getBouquet(bouquetId.value), false)
+const bouquet = resource.data
+const loading = resource.loading
+const message = resource.message
+const pending = resource.pending
+const selectedSpec = computed(() => bouquet.value?.specs.find((item) => item.id === specId.value))
+const subtotal = computed(() => (selectedSpec.value?.price || 0) * quantity.value)
+const detailImages = computed(() =>
+  bouquet.value?.images.length ? bouquet.value.images : bouquet.value ? [bouquet.value.image] : [],
+)
+const canBuy = computed(
+  () =>
+    customCheckoutEnabled &&
+    Boolean(selectedSpec.value && selectedSpec.value.available >= quantity.value),
+)
 onLoad((options) => {
-  if (options?.id) bouquetId.value = options.id
+  bouquetId.value = options?.id || ''
 })
-// 减少购买束数，至少保留一束。
+async function load() {
+  if (!bouquetId.value) {
+    resource.message.value = '花束参数不完整'
+    return
+  }
+  await resource.load()
+  if (!bouquet.value?.specs.some((item) => item.id === specId.value))
+    specId.value =
+      bouquet.value?.specs.find((item) => item.available > 0)?.id ||
+      bouquet.value?.specs[0]?.id ||
+      ''
+}
+onShow(load)
 function decreaseQuantity() {
   quantity.value = Math.max(1, quantity.value - 1)
 }
-// 增加购买束数，99为前端数量控件上限。
 function increaseQuantity() {
-  quantity.value = Math.min(99, quantity.value + 1)
+  quantity.value = Math.min(selectedSpec.value?.available || 1, quantity.value + 1)
 }
-// 携带花束与数量进入平台定制确认订单流程。
+function chooseSpec(id: string) {
+  specId.value = id
+  quantity.value = 1
+}
 function buyNow() {
+  if (!canBuy.value) return
   uni.navigateTo({
-    url: `/pages/checkout/index?type=custom&id=${bouquetId.value}&quantity=${quantity.value}&method=delivery`,
+    url:
+      '/pages/custom-checkout/index?id=' +
+      encodeURIComponent(bouquetId.value) +
+      '&specId=' +
+      encodeURIComponent(specId.value) +
+      '&quantity=' +
+      quantity.value,
   })
 }
-// 返回专区选择其他成品花束。
 function goBouquets() {
   uni.redirectTo({ url: '/pages/bouquets/index' })
 }
@@ -49,7 +76,7 @@ function goBouquets() {
           <text class="product-title">{{ bouquet.name }}</text>
           <text class="price">
             <text class="currency">¥</text>
-            {{ bouquet.price.toFixed(2) }}
+            {{ (selectedSpec?.price ?? bouquet.price).toFixed(2) }}
           </text>
         </view>
         <text class="subtitle">{{ bouquet.description }}</text>
@@ -62,10 +89,17 @@ function goBouquets() {
         <text class="section-title">选一份特别的心意</text>
         <view class="field">
           <text class="field-label">花束规格</text>
-          <view class="specification selected">
-            <text>{{ bouquet.specification }}</text>
-            <text class="spec-unit">每{{ bouquet.unit }}</text>
-          </view>
+          <button
+            v-for="spec in bouquet.specs"
+            :key="spec.id"
+            class="specification"
+            :class="{ selected: spec.id === specId }"
+            :disabled="spec.available < 1"
+            @click="chooseSpec(spec.id)"
+          >
+            <text>{{ spec.name }}</text
+            ><text class="spec-unit">每{{ spec.unit }}</text>
+          </button>
         </view>
         <view class="quantity-row">
           <view>
@@ -84,7 +118,7 @@ function goBouquets() {
             <text class="quantity-value">{{ quantity }}</text>
             <button
               class="stepper-button"
-              :disabled="quantity >= 99"
+              :disabled="quantity >= (selectedSpec?.available || 1)"
               aria-label="增加数量"
               @click="increaseQuantity"
             >
@@ -108,11 +142,11 @@ function goBouquets() {
         <text class="subtitle">无需选择门店，平台安排合作方制作与配送。</text>
         <view class="delivery-info">
           <text class="field-label">配送区域</text>
-          <text>{{ homeContent.customDeliveryArea }}</text>
+          <text>{{ bouquet.deliveryArea }}</text>
         </view>
         <view class="delivery-info">
           <text class="field-label">配送费用</text>
-          <text>¥{{ homeContent.customDeliveryFee.toFixed(2) }}</text>
+          <text>¥{{ bouquet.deliveryFee.toFixed(2) }}</text>
         </view>
         <text class="hint">填写收货地址后，在确认订单页核对配送信息。</text>
       </view>
@@ -137,7 +171,9 @@ function goBouquets() {
           配送地址须在平台服务区域内，优惠券适用范围以确认订单页为准，不抵配送费。
         </text>
       </view>
-      <text class="demo-note">图片、价格及配送信息均为演示素材</text>
+      <text class="demo-note">{{
+        customCheckoutEnabled ? '配送费用以订单报价为准' : '花束下单暂未开放'
+      }}</text>
     </view>
     <view class="purchase-bar">
       <view>
@@ -147,11 +183,14 @@ function goBouquets() {
           {{ subtotal.toFixed(2) }}
         </text>
       </view>
-      <button class="buy-button" @click="buyNow">立即购买</button>
+      <button class="buy-button" :disabled="!canBuy" @click="buyNow">
+        {{ customCheckoutEnabled ? '立即购买' : '暂未开放' }}
+      </button>
     </view>
   </view>
   <view v-else class="empty-state">
-    <text>暂未找到这款花束</text>
+    <text>{{ loading ? '正在加载花束…' : message || '暂未找到这款花束' }}</text
+    ><button v-if="!loading && message && !pending" @click="load">重试</button>
     <button @click="goBouquets">查看其他花束</button>
   </view>
 </template>

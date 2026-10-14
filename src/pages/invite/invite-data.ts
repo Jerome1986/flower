@@ -1,14 +1,11 @@
+
+import type { Coupon } from '@/types/coupon'
+import type { InviteRecord } from '@/types/invite'
 import { getNewUserCoupon, grantNewUserCoupon } from '../coupons/new-user-coupon'
-import { readCoupons, type Coupon } from '../coupons/coupon-data'
+import { readCoupons } from '../coupons/coupon-data'
 
 // 模拟邀请关系，每个新用户只绑定一次。
-export interface InviteRecord {
-  id: string
-  inviterId: string
-  name: string
-  date: string
-  reward: string
-}
+
 // 取得账户邀请码，并保存可验证的模拟映射。
 export function getInviteCode(userId: string) {
   // 本地有效邀请码与用户的对应关系。

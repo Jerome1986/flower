@@ -1,22 +1,9 @@
+
+import type { Coupon } from '@/types/coupon'
 import { getNewUserCoupon } from './new-user-coupon'
 
 // 卡包与订单共用的本地演示券。
-export interface Coupon {
-  id: string
-  type: 'cash' | 'exchange'
-  title: string
-  amount?: number
-  scope: string
-  source: string
-  status: 'available' | 'locked' | 'used' | 'expired'
-  expiresAt: number
-  // 兑换商品及规格，旧演示券缺失时兼容玫瑰8支。
-  productId?: string
-  specification?: string
-  exchangeQuantity?: number
-  // 券适用的商品类别，默认门店散花。
-  productType?: 'A' | 'B'
-}
+
 
 // 读取演示券，并合并当前用户真实领取的模拟新人券。
 export function readCoupons(userId?: string): Coupon[] {
@@ -43,7 +30,7 @@ export function readCoupons(userId?: string): Coupon[] {
         type: 'cash',
         title: '邀请花礼券',
         amount: 10,
-        scope: '门店散花可用',
+        scope: '全部商品可用',
         source: '邀请奖励',
         status: 'locked',
         expiresAt: createdAt + 2 * 86400000,
@@ -62,7 +49,7 @@ export function readCoupons(userId?: string): Coupon[] {
         type: 'cash',
         title: '邀请花礼券',
         amount: 10,
-        scope: '门店散花可用',
+        scope: '全部商品可用',
         source: '邀请奖励',
         status: 'expired',
         expiresAt: createdAt - 86400000,
@@ -81,11 +68,9 @@ export function couponReason(
   productId: string,
   specification: string,
   quantity: number,
-  custom: boolean,
 ): string {
   if (coupon.status !== 'available') return '优惠券已使用或被占用'
   if (coupon.expiresAt <= Date.now()) return '优惠券已过期'
-  if ((coupon.productType || 'A') !== (custom ? 'B' : 'A')) return '不适用于当前商品类别'
   if (
     coupon.type === 'exchange' &&
     (productId !== (coupon.productId || 'rose') ||

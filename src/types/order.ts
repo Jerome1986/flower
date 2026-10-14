@@ -1,9 +1,12 @@
-// 前端模拟订单信息，供确认订单和支付结果页传递数据。
 export interface PreviewOrder {
   type?: 'ordinary' | 'custom'
   storeId?: string
   userId?: string
-  status?: 'pending' | 'preparing' | 'ready' | 'delivering' | 'completed'
+  status?: 'pending' | 'preparing' | 'ready' | 'delivering' | 'completed' | 'unpaid' | 'cancelled'
+  backendStatus?: string
+  paymentStatus?: string
+  version?: number
+  logs?: { action: string; createdAt: string; remark?: string | null }[]
   pickupCode?: string
   // 下单时保存券类型，便于区分兑花与现金抵扣。
   couponType?: 'cash' | 'exchange'

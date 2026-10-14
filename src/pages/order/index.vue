@@ -1,19 +1,39 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { mockFlowers, mockStores } from '../index/mock-data'
-import { readStock } from '@/services/preview-stock'
+import { getSelectedStore, getProducts } from '@/pages/stores/shop-data'
+import type { ShopProduct } from '@/types/shop'
+import type { FlowerStore } from '@/types/store'
 
-// 列表分类复用首页普通鲜花。
-const categories = [
+// 从当前门店上架商品中生成分类。
+const categories = computed(() => [
   { id: 'all', name: '全部鲜花' },
-  ...mockFlowers.map((product) => ({ id: product.id, name: product.name })),
-]
-// 普通鲜花展示数据，后续接入当前门店的上架商品。
-const products = mockFlowers.map((product) => ({ ...product, categoryId: product.id }))
+  ...Array.from(new Map(products.value.map((product) => [product.categoryId, { id: product.categoryId, name: product.categoryName }])).values()),
+])
+// 当前门店接口返回的上架商品。
+const products = ref<ShopProduct[]>([])
+const loading = ref(false)
+const failed = ref(false)
+let loadVersion = 0
+async function loadCatalog() {
+  const version = ++loadVersion
+  loading.value = true
+  failed.value = false
+  products.value = []
+  currentStore.value = undefined
+  try {
+    const store = await getSelectedStore()
+    const list = store ? await getProducts(store.id) : []
+    if (version !== loadVersion) return
+    currentStore.value = store
+    products.value = list
+    if (!categories.value.some((item) => item.id === categoryId.value)) categoryId.value = 'all'
+  } catch { if (version === loadVersion) failed.value = true }
+  finally { if (version === loadVersion) loading.value = false }
+}
 
-// 当前匹配门店，结构预览暂使用模拟中心店。
-const currentStore = ref(mockStores[0])
+// 当前真实门店。
+const currentStore = ref<FlowerStore>()
 // 是否展开当前门店的详细信息。
 const showStore = ref(false)
 
@@ -23,11 +43,9 @@ const method = ref('pickup')
 const categoryId = ref('all')
 // 是否显示收花方式提示。
 const showNotice = ref(true)
-// 已确认订单扣减后的各门店库存。
-const stocks = ref<Record<string, Record<string, number>>>({})
 // 当前分类的商品。
 const currentProducts = computed(() =>
-  products
+  products.value
     .filter(
       (product) =>
         (categoryId.value === 'all' || product.categoryId === categoryId.value) &&
@@ -36,26 +54,21 @@ const currentProducts = computed(() =>
     .map((product) => ({
       ...product,
       soldOut:
-        !currentStore.value.open || (stocks.value[currentStore.value.id]?.[product.id] || 0) === 0,
+        !currentStore.value?.open || !product.specs.some((spec) => spec.available > 0),
     })),
 )
 // 当前分类名称。
 const categoryName = computed(
-  () => categories.find((category) => category.id === categoryId.value)?.name,
+  () => categories.value.find((category) => category.id === categoryId.value)?.name,
 )
 
 // 接收首页自取或配送入口的展示方式。
 onShow(() => {
-  stocks.value = readStock()
+  void loadCatalog()
   // 首页预设的收花方式。
   const entryMethod = uni.getStorageSync('flower-entry-method')
   if (entryMethod === 'pickup' || entryMethod === 'delivery') method.value = entryMethod
   uni.removeStorageSync('flower-entry-method')
-  // 门店列表返回的模拟选择结果。
-  const selectedId = uni.getStorageSync('flower-selected-store')
-  // 根据标识取得对应门店信息。
-  const selectedStore = mockStores.find((store) => store.id === selectedId)
-  if (selectedStore) currentStore.value = selectedStore
 })
 
 // 切换自取或配送。
@@ -69,7 +82,7 @@ function changeCategory(value: string) {
 // 打开门店列表并传入当前门店与收花方式。
 function chooseStore() {
   uni.navigateTo({
-    url: `/pages/stores/index?storeId=${currentStore.value.id}&method=${method.value}`,
+    url: `/pages/stores/index?storeId=${currentStore.value?.id || ''}&method=${method.value}`,
   })
 }
 // 展开或收起门店地址、营业时间和电话。
@@ -78,6 +91,7 @@ function toggleStore() {
 }
 // 点击整个商品卡片查看详情。
 function viewProduct(id: string) {
+  if (!currentStore.value) return
   uni.navigateTo({
     url: `/pages/product/index?id=${id}&storeId=${currentStore.value.id}&method=${method.value}`,
   })
@@ -90,7 +104,7 @@ function closeNotice() {
 
 <template>
   <view class="order-page">
-    <view class="store-card">
+    <view v-if="currentStore" class="store-card">
       <view class="store-header">
         <button class="store-name" @click="chooseStore">
           {{ currentStore.name }}
@@ -131,7 +145,11 @@ function closeNotice() {
         </text>
       </view>
     </view>
-    <view class="catalog">
+    <view v-if="loading || failed || !currentStore" class="list-footer">
+      <text>{{ loading ? '正在加载鲜花…' : failed ? '加载失败，请重试' : '暂无可选门店' }}</text>
+      <button v-if="failed" @click="loadCatalog">重新加载</button>
+    </view>
+    <view v-else class="catalog">
       <scroll-view class="category-list" scroll-y>
         <button
           v-for="category in categories"
@@ -161,7 +179,7 @@ function closeNotice() {
               {{ product.specification }} / {{ product.unit }}
             </text>
             <text class="product-description">
-              {{ product.methods.includes('delivery') ? '自取 / 配送' : '仅自取' }}
+              {{ product.methods.map(item => item === 'pickup' ? '自取' : '配送').join(' / ') }}
             </text>
             <view class="product-bottom">
               <view class="price">
@@ -183,8 +201,8 @@ function closeNotice() {
           </view>
         </view>
         <view class="list-footer">
-          <text>已经看到全部花啦</text>
-          <text>图片、门店与价格均为演示素材</text>
+          <text>{{ currentProducts.length ? '已经看到全部花啦' : '当前门店暂无符合条件的鲜花' }}</text>
+          <text>商品和库存以门店当前配置为准</text>
         </view>
       </scroll-view>
     </view>

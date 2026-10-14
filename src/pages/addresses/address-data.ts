@@ -1,12 +1,7 @@
+
+import type { Address } from '@/types/address'
 // 本地收货地址结构，供地址管理和确认订单共用。
-export interface Address {
-  id: string
-  name: string
-  phone: string
-  region: string
-  detail: string
-  isDefault: boolean
-}
+
 // 按用户读取地址，兼容原测试用户的旧地址。
 export function readAddresses(userId?: string): Address[] {
   if (!userId) return []

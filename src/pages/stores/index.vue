@@ -1,31 +1,38 @@
 <script setup lang="ts">
+import type { FlowerStore } from '@/types/store'
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { mockStores, type FlowerStore } from '../index/mock-data'
+import { getStores } from '@/pages/stores/shop-data'
 
 // 当前选择的门店标识。
-const selectedId = ref(mockStores[0].id)
+const selectedId = ref('')
+const stores = ref<FlowerStore[]>([])
+const loading = ref(false)
+const failed = ref(false)
+async function loadStores() {
+  loading.value = true
+  failed.value = false
+  try { stores.value = await getStores() }
+  catch { stores.value = []; failed.value = true }
+  finally { loading.value = false }
+}
 // 门店名称或地址的搜索关键词。
 const keyword = ref('')
 // 当前收花方式，用于展示配送区域和费用。
 const method = ref('pickup')
-// 各门店的模拟距离，仅用于前端结构预览。
-const storeDistances: Record<string, string> = {
-  'store-1': '1.7km',
-  'store-2': '3.2km',
-  'store-3': '5.6km',
-}
-// 按关键词筛选的模拟门店列表。
+// 按关键词筛选接口返回的门店。
 const visibleStores = computed(() =>
-  mockStores.filter((store) => `${store.name}${store.address}`.includes(keyword.value.trim())),
+  stores.value.filter((store) => `${store.name}${store.address}`.includes(keyword.value.trim())),
 )
 
 // 读取下单页传入的门店和收花方式。
 onLoad((options) => {
+  selectedId.value = String(uni.getStorageSync('flower-selected-store') || '')
+  void loadStores()
   if (options?.storeId) selectedId.value = options.storeId
   if (options?.method === 'delivery') method.value = 'delivery'
 })
-// 保存选择的模拟门店并返回下单页。
+// 保存选择的门店并返回来源页。
 function selectStore(store: FlowerStore) {
   if (!store.open) return
   uni.setStorageSync('flower-selected-store', store.id)
@@ -71,7 +78,7 @@ function clearSearch() {
         placeholder="搜索门店名称或地址"
         placeholder-class="search-placeholder"
         confirm-type="search"
-        maxlength="50"
+        :maxlength="50"
       />
       <button v-if="keyword" class="clear-button" aria-label="清空搜索" @click="clearSearch">
         ×
@@ -110,7 +117,7 @@ function clearSearch() {
             </view>
             <view class="distance-row">
               <text class="iconfont icon-address" />
-              <text>距您 {{ storeDistances[store.id] }}</text>
+              <text>可手动选择门店</text>
             </view>
           </view>
         </view>
@@ -148,7 +155,11 @@ function clearSearch() {
         </view>
       </view>
     </view>
-    <view v-if="!visibleStores.length" class="empty-state">
+    <view v-if="loading || failed" class="empty-state">
+      <text>{{ loading ? '正在加载门店…' : '门店加载失败' }}</text>
+      <button v-if="failed" @click="loadStores">重新加载</button>
+    </view>
+    <view v-else-if="!visibleStores.length" class="empty-state">
       <text class="iconfont icon-address" />
       <text class="empty-title">暂未找到这家花店</text>
       <text class="muted">换个门店名称或地址试试</text>
@@ -156,7 +167,7 @@ function clearSearch() {
     </view>
     <view class="page-footer">
       <text>每一次相遇，都值得一束花</text>
-      <text class="muted">门店信息为演示素材</text>
+      <text class="muted">营业信息以门店当前配置为准</text>
     </view>
   </view>
 </template>

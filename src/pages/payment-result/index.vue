@@ -1,23 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import type { PreviewOrder } from '../checkout/preview-order'
-import { useUserStore } from '@/stores/modules/user'
-import { findOrder, orderStatus } from '@/services/preview-orders'
+import { useResource } from '@/composables/use-resource'
+import type { PreviewOrder } from '@/types/order'
+import { computed, ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 
-// 当前展示的前端模拟成功订单。
-const order = ref<PreviewOrder | null>(null)
+import { useUserStore } from '@/stores/modules/user'
+import { orderStatus, orderHint, orderTitle, orderPaymentLabel } from '@/pages/orders/order-display'
+import { getOrder } from '@/pages/orders/order-data'
+
+// 数据以当前账户的服务端响应为准。
 // 支付结果只展示当前用户自己的订单。
 const userStore = useUserStore()
+const orderNo = ref('')
+onLoad((options) => {
+  orderNo.value = options?.orderNo || ''
+})
+const resource = useResource(() => {
+  if (!orderNo.value) throw new Error('订单编号缺失')
+  return getOrder(orderNo.value)
+})
+const order = computed(() => resource.data.value || null)
+const loading = resource.loading
+const failed = computed(() => Boolean(resource.message.value))
+async function loadOrder() {
+  await resource.load()
+}
 
 // 从确认订单页读取模拟订单，不请求真实支付。
 onShow(() => {
-  order.value = findOrder()
-  if (
-    userStore.profile?.role !== 'user' ||
-    (order.value && (order.value.userId || 'test-user') !== userStore.profile.id)
-  )
-    order.value = null
+  void loadOrder()
 })
 // 返回下单页继续挑选鲜花。
 function goShopping() {
@@ -37,20 +48,18 @@ function viewOrder() {
 <template>
   <view v-if="order" class="result-page">
     <view class="success-section">
-      <view class="success-icon"><UniIcons type="checkmarkempty" size="38" color="#32845b" /></view>
-      <text class="success-title">{{ order.total === 0 ? '领取成功' : '支付成功' }}</text>
+      <view class="success-icon"><UniIcons type="checkmarkempty" size="38" color="#eed261" /></view>
+      <text class="success-title">{{
+        order.status === 'unpaid' ? '下单成功' : orderTitle(order)
+      }}</text>
       <text class="success-copy">
-        {{
-          order.type === 'custom'
-            ? '平台已收到心意，将为你安排制作与配送'
-            : '心意已送达花店，鲜花正在等待与你相遇'
-        }}
+        {{ '订单已保存，可在我的订单中查看' }}
       </text>
       <text class="amount">
         <text class="currency">¥</text>
         {{ order.total.toFixed(2) }}
       </text>
-      <text class="amount-label">{{ order.total === 0 ? '本单应付金额' : '本单支付金额' }}</text>
+      <text class="amount-label">订单金额 · {{ orderPaymentLabel(order) }}</text>
     </view>
     <view class="panel">
       <view class="panel-heading">
@@ -85,13 +94,7 @@ function viewOrder() {
       <view class="fulfillment-note">
         <text class="iconfont icon-hua" />
         <text>
-          {{
-            order.type === 'custom'
-              ? '平台将安排合作方制作配送，请保持电话畅通。'
-              : order.method === 'pickup'
-              ? '花店备货完成后，订单详情会显示取货码，请在营业时间内到店自取。'
-              : '花店接单备货后安排配送，请保持电话畅通，耐心等待鲜花送达。'
-          }}
+          {{ orderHint(order) }}
         </text>
       </view>
     </view>
@@ -103,10 +106,12 @@ function viewOrder() {
         <text class="iconfont icon-youjiantou1" />
       </button>
     </view>
-    <text class="preview-note">模拟订单已提交，默认支付成功，未发生真实扣款</text>
   </view>
   <view v-else class="empty-state">
-    <text>暂无订单信息</text>
+    <text>{{
+      loading ? '正在读取订单…' : failed ? '读取失败，可重试或前往我的订单查看' : '暂无订单信息'
+    }}</text>
+    <button v-if="failed" @click="loadOrder">重新加载</button>
     <button @click="goShopping">去选花</button>
   </view>
 </template>

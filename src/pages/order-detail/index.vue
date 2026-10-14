@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { useResource } from '@/composables/use-resource'
+import type { PreviewOrder } from '@/types/order'
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-import type { PreviewOrder } from '../checkout/preview-order'
+import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
+
 import { useUserStore } from '@/stores/modules/user'
 import {
-  findOrder,
   orderStages,
   orderStageIndex,
   orderTitle,
   orderHint,
-} from '@/services/preview-orders'
+  orderPaymentLabel,
+} from '@/pages/orders/order-display'
+import { getOrder, cancelOrder } from '@/pages/orders/order-data'
 
 // 当前用户账户，店长订单在门店管理页展示。
 const userStore = useUserStore()
@@ -17,7 +20,37 @@ const userStore = useUserStore()
 const orderNo = ref('')
 
 // 当前展示的模拟订单快照。
-const order = ref<PreviewOrder | null>(null)
+const resource = useResource(() => {
+  if (!orderNo.value) throw new Error('订单编号缺失')
+  return getOrder(orderNo.value)
+})
+const order = computed(() => resource.data.value || null)
+const loading = resource.loading
+const failed = computed(() => Boolean(resource.message.value))
+const cancelling = ref(false)
+async function loadOrder() {
+  await resource.load()
+}
+function cancel() {
+  if (cancelling.value || !order.value) return
+  const token = userStore.token
+  uni.showModal({
+    title: '取消订单',
+    content: '取消后将释放预留库存，确认取消？',
+    success: async (result) => {
+      if (!result.confirm || cancelling.value || token !== userStore.token) return
+      cancelling.value = true
+      try {
+        await cancelOrder(orderNo.value)
+        await loadOrder()
+      } catch {
+        await loadOrder()
+      } finally {
+        cancelling.value = false
+      }
+    },
+  })
+}
 // 订单履约进度，模拟订单默认为待接单。
 const stages = computed(() => orderStages(order.value))
 // 当前履约步骤，与店长页面一致。
@@ -33,24 +66,20 @@ const deliveryFee = computed(() => order.value?.deliveryFee ?? 0)
 // 当前订单的模拟优惠金额。
 const discount = computed(() => order.value?.discount ?? 0)
 
-// 读取本地模拟订单，保持与支付结果页一致。
+// 数据以当前账户的服务端响应为准。
 onLoad((options) => {
   orderNo.value = options?.orderNo || ''
 })
 // 返回页面时刷新最新状态和取货码。
 onShow(() => {
-  if (userStore.profile?.role === 'manager') {
-    order.value = null
-    uni.redirectTo({ url: '/pages/store-orders/index' })
-    return
+  void loadOrder()
+})
+onPullDownRefresh(async () => {
+  try {
+    await loadOrder()
+  } finally {
+    uni.stopPullDownRefresh()
   }
-  // 已提交的模拟订单历史。
-  order.value = findOrder(orderNo.value)
-  if (
-    userStore.profile?.role !== 'user' ||
-    (order.value && (order.value.userId || 'test-user') !== userStore.profile.id)
-  )
-    order.value = null
 })
 // 复制已备货订单的取货码。
 function copyPickupCode() {
@@ -79,6 +108,9 @@ function goShopping() {
       <text class="eyebrow">我的鲜花订单</text>
       <text class="status-title">{{ statusTitle }}</text>
       <text class="status-copy">{{ statusCopy }}</text>
+      <button class="refresh-order" :disabled="loading || cancelling" @click="loadOrder">
+        刷新订单状态
+      </button>
       <view class="progress">
         <view
           v-for="(stage, index) in stages"
@@ -91,7 +123,10 @@ function goShopping() {
         </view>
       </view>
     </view>
-    <view v-if="order.method === 'pickup'" class="pickup-note">
+    <view
+      v-if="order.method === 'pickup' && !['unpaid', 'cancelled'].includes(order.status || '')"
+      class="pickup-note"
+    >
       <text class="iconfont icon-shouye1" />
       <view>
         <template v-if="order.status === 'ready' && order.pickupCode">
@@ -127,7 +162,7 @@ function goShopping() {
       <view class="contact-info">
         <text>{{ order.contactName }} · {{ order.phone }}</text>
         <text v-if="order.method === 'delivery'" class="muted">{{ order.address }}</text>
-        <text v-else class="muted">备货完成后，凭取货码在营业时间内到店领取</text>
+        <text v-else class="muted">{{ orderHint(order) }}</text>
       </view>
     </view>
     <view class="panel">
@@ -154,7 +189,7 @@ function goShopping() {
         <text class="discount">−¥{{ discount.toFixed(2) }}</text>
       </view>
       <view class="amount-row total-row">
-        <text>实付金额</text>
+        <text>订单金额</text>
         <text class="price">¥{{ order.total.toFixed(2) }}</text>
       </view>
     </view>
@@ -179,7 +214,7 @@ function goShopping() {
       </view>
       <view class="info-row">
         <text>支付状态</text>
-        <text class="info-value">{{ order.total === 0 ? '0元确认成功' : '模拟支付成功' }}</text>
+        <text class="info-value">{{ orderPaymentLabel(order) }}</text>
       </view>
       <view class="info-row remark-row">
         <text>订单备注</text>
@@ -190,11 +225,17 @@ function goShopping() {
       {{
         order.type === 'custom'
           ? '如需取消或退款，请联系平台客服'
-          : '如需取消或退款，请联系门店协助处理'
+          : order.status === 'unpaid'
+          ? '可直接取消订单；取消后释放预留库存'
+          : ['completed', 'cancelled'].includes(order.status || '')
+          ? '订单已结束'
+          : '如需取消，请联系门店协助处理'
       }}
     </text>
-    <text class="demo-note">当前为模拟订单，未发生真实扣款</text>
     <view class="action-bar">
+      <button v-if="order.status === 'unpaid'" :disabled="cancelling" @click="cancel">
+        {{ cancelling ? '取消中…' : '取消订单' }}
+      </button>
       <button class="contact-button" @click="contactStore">
         {{ order.type === 'custom' ? '联系平台' : '联系门店' }}
       </button>
@@ -202,11 +243,22 @@ function goShopping() {
     </view>
   </view>
   <view v-else class="empty-state">
-    <text>暂无订单信息</text>
+    <text>{{ loading ? '正在加载订单…' : failed ? '订单加载失败或不存在' : '暂无订单信息' }}</text>
+    <button v-if="failed" @click="loadOrder">重新加载</button>
     <button @click="goShopping">去选花</button>
   </view>
 </template>
 
 <style lang="scss" scoped>
 @use './detail.scss';
+.detail-page .refresh-order {
+  margin: 20rpx 0 0;
+  padding: 12rpx 24rpx;
+  width: fit-content;
+  border: 1rpx solid #eed261;
+  border-radius: 28rpx;
+  color: #eed261;
+  font-size: 24rpx;
+  background: #fff;
+}
 </style>

@@ -30,11 +30,11 @@
 		},
 		{
 			"path": "pages/order-detail/index",
-			"style": { "navigationBarTitleText": "订单详情" }
+			"style": { "navigationBarTitleText": "订单详情", "enablePullDownRefresh": true }
 		},
 		{
 			"path": "pages/orders/index",
-			"style": { "navigationBarTitleText": "我的订单" }
+			"style": { "navigationBarTitleText": "我的订单", "enablePullDownRefresh": true }
 		},
 		{
 			"path": "pages/coupons/index",
@@ -53,7 +53,11 @@
 			"style": { "navigationBarTitleText": "定制鲜花专区" }
 		},
 		{
-			"path": "pages/bouquet-detail/index",
+			"path": "pages/custom-checkout/index",
+            "style": { "navigationBarTitleText": "确认花束订单" }
+        },
+        {
+            "path": "pages/bouquet-detail/index",
 			"style": { "navigationBarTitleText": "花束详情" }
 		},
 		{
@@ -81,7 +85,7 @@
 	],
 	"tabBar": {
 		"color": "#707b74",
-		"selectedColor": "#32845b",
+		"selectedColor": "#eed261",
 		"backgroundColor": "#ffffff",
 		"borderStyle": "white",
 		"list": [

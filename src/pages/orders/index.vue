@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useResource } from '@/composables/use-resource'
+import type { PreviewOrder } from '@/types/order'
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-import type { PreviewOrder } from '../checkout/preview-order'
+import { onLoad, onShow, onPullDownRefresh } from '@dcloudio/uni-app'
+
 import { useUserStore } from '@/stores/modules/user'
-import { readOrders, orderStatus, orderHint } from '@/services/preview-orders'
+import { orderStatus, orderHint } from '@/pages/orders/order-display'
+import { getOrders } from '@/pages/orders/order-data'
 
 // 当前账户，用户订单只展示该用户的订单。
 const userStore = useUserStore()
@@ -17,14 +20,23 @@ const tabs = [
   { id: 'processing', name: '待接单 / 制作' },
   { id: 'fulfillment', name: '待自取 / 配送' },
   { id: 'completed', name: '已完成' },
+  { id: 'cancelled', name: '已取消 / 关闭' },
 ]
-// 本地提交的模拟订单列表。
-const orders = ref<PreviewOrder[]>([])
+// 数据以当前账户的服务端响应为准。
+const resource = useResource(() => getOrders())
+const orders = computed(() => resource.data.value || [])
+const loading = resource.loading
+const failed = computed(() => Boolean(resource.message.value))
+async function loadOrders() {
+  await resource.load()
+}
 // 按最新履约状态筛选用户订单。
 const visibleOrders = computed(() =>
   orders.value.filter(
     (order) =>
       activeTab.value === 'all' ||
+      (activeTab.value === 'unpaid' && order.status === 'unpaid') ||
+      (activeTab.value === 'cancelled' && order.status === 'cancelled') ||
       (activeTab.value === 'processing' &&
         (!order.status || ['pending', 'preparing'].includes(order.status))) ||
       (activeTab.value === 'fulfillment' && ['ready', 'delivering'].includes(order.status || '')) ||
@@ -52,16 +64,14 @@ onLoad((options) => {
 })
 // 刷新模拟订单并兼容此前仅保存的单笔订单。
 onShow(() => {
-  if (userStore.profile?.role === 'manager') {
-    uni.redirectTo({ url: '/pages/store-orders/index' })
-    return
+  void loadOrders()
+})
+onPullDownRefresh(async () => {
+  try {
+    await loadOrders()
+  } finally {
+    uni.stopPullDownRefresh()
   }
-  // 本地订单历史数据。
-  orders.value = readOrders()
-  orders.value =
-    userStore.profile?.role === 'user'
-      ? orders.value.filter((order) => (order.userId || 'test-user') === userStore.profile?.id)
-      : []
 })
 // 切换订单状态分类。
 function changeTab(id: string) {
@@ -83,6 +93,7 @@ function goShopping() {
       <text class="eyebrow">一花一份心意</text>
       <text class="page-title">我的鲜花订单</text>
       <text class="subtitle">每一份美好，都在这里留下记录</text>
+      <button :disabled="loading" @click="loadOrders">刷新订单</button>
     </view>
     <scroll-view class="status-tabs" scroll-x>
       <view class="tabs-row">
@@ -96,7 +107,11 @@ function goShopping() {
         </button>
       </view>
     </scroll-view>
-    <view v-if="visibleOrders.length" class="order-list">
+    <view v-if="loading || failed" class="empty-state">
+      <text>{{ loading ? '正在加载订单…' : '订单加载失败' }}</text>
+      <button v-if="failed" @click="loadOrders">重新加载</button>
+    </view>
+    <view v-else-if="visibleOrders.length" class="order-list">
       <view
         v-for="order in visibleOrders"
         :key="order.orderNo"
@@ -125,7 +140,7 @@ function goShopping() {
         <view class="order-summary">
           <text class="order-date">{{ order.createdAt || '模拟订单' }}</text>
           <text class="total">
-            实付
+            订单金额
             <text class="price">¥{{ order.total.toFixed(2) }}</text>
           </text>
         </view>
@@ -142,7 +157,7 @@ function goShopping() {
       <text class="muted">挑一份喜欢的花，让日常多一点美好</text>
       <button class="shopping-button" @click="goShopping">去选花</button>
     </view>
-    <text class="demo-note">当前展示前端模拟订单</text>
+    <text class="demo-note">未付款订单可在详情中取消</text>
   </view>
 </template>
 
