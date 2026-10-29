@@ -2,8 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
-import { getBouquetApi as getBouquet, quoteCustomApi as quoteCustom } from '@/api/bouquets'
-import { submitCustom, customCheckoutEnabled } from '@/pages/custom-checkout/bouquet-checkout'
+import { getBouquet } from '@/pages/bouquets/bouquet-data'
+import { quoteCustom, submitCustom, customCheckoutEnabled } from './bouquet-checkout'
 import { getAddresses } from '@/pages/addresses/address-actions'
 import { integrationMessage } from '@/utils/integration'
 import { useResource } from '@/composables/use-resource'
@@ -74,7 +74,7 @@ function login() {
     encodeURIComponent(specId.value) +
     '&quantity=' +
     quantity.value
-  uni.navigateTo({ url: '/pages/test-login/index?returnUrl=' + encodeURIComponent(back) })
+  uni.navigateTo({ url: '/pages/login/index?returnUrl=' + encodeURIComponent(back) })
 }
 function selection() {
   return {
@@ -154,8 +154,8 @@ async function refreshQuote() {
     quoteMessage.value = '请先填写配送地址'
     return
   }
-  if (quantity.value > spec.value.available) {
-    quoteMessage.value = '当前规格库存不足'
+  if (quantity.value > (bouquet.value?.maxQuantity || 1)) {
+    quoteMessage.value = '单笔购买数量超过限制'
     return
   }
   quoteLoading.value = true
@@ -174,7 +174,10 @@ async function submit() {
   if (createdOrderNo.value)
     return uni.redirectTo({ url: '/pages/payment-result/index?orderNo=' + createdOrderNo.value })
   if (!user.token) return login()
-  if (!submission.value && (!quote.value || !spec.value || quantity.value > spec.value.available))
+  if (
+    !submission.value &&
+    (!quote.value || !spec.value || quantity.value > (bouquet.value?.maxQuantity || 1))
+  )
     return
   if (!name.value.trim() || !/^1\d{10}$/.test(phone.value) || !address.value.trim()) {
     uni.showToast({ title: '请填写完整联系人、手机号和地址', icon: 'none' })
@@ -208,15 +211,18 @@ async function submit() {
     if (token === user.token) submitting.value = false
   }
 }
+function chooseCoupon() {
+  console.info('[待对接] 花束订单优惠券')
+}
 </script>
 <template>
   <view class="checkout-page">
     <view class="panel"
       ><text class="section-title">确认花束订单</text
-      ><text class="hint">平台安排配送 · 测试下单不实际付款</text></view
+      ><text class="hint">{{ '平台安排配送 · 暂不支持在线付款' }}</text></view
     >
     <view v-if="!customCheckoutEnabled || invalidRoute" class="panel"
-      ><text>{{ !customCheckoutEnabled ? '花束下单暂未开放' : '订单参数不完整，请重新选购' }}</text
+      ><text>订单参数不完整，请重新选购</text
       ><button @click="goBouquets">返回花束专区</button></view
     >
     <view v-else-if="loading || message" class="panel"
@@ -225,12 +231,13 @@ async function submit() {
     >
     <template v-else-if="bouquet && spec">
       <view class="panel"
-        ><text class="section-title">{{ bouquet.name }}</text
-        ><text class="hint">{{ spec.name }} / {{ spec.unit }} × {{ quantity }}</text
-        ><text class="hint">配送区域：{{ bouquet.deliveryArea }}</text></view
+        ><image class="summary-image" :src="bouquet.image" mode="aspectFill" /><text
+          class="section-title"
+          >{{ bouquet.name }}</text
+        ><text class="hint">{{ spec.name }} / {{ spec.unit }} × {{ quantity }}</text></view
       >
       <view class="panel">
-        <text class="section-title">联系信息</text
+        <text class="section-title">收货信息</text
         ><button :disabled="locked" @click="chooseAddress">选择收货地址</button
         ><text class="hint">{{ addressMessage }}</text>
         <view class="contact-field"
@@ -257,6 +264,10 @@ async function submit() {
           class="remark-input"
           placeholder="完整配送地址"
         />
+      </view>
+      <view class="panel">
+        <text class="section-title">订单备注</text>
+        <text class="hint">可填写配送提醒；固定款式不支持改款</text>
         <textarea
           v-model="remark"
           :disabled="locked"
@@ -267,7 +278,7 @@ async function submit() {
       </view>
       <view class="panel">
         <text class="section-title">订单金额（未付款）</text
-        ><text class="hint">本阶段暂不支持优惠券</text>
+        ><button :disabled="locked" @click="chooseCoupon">选择优惠券</button>
         <template v-if="quote"
           ><view class="amount-row"
             ><text>商品金额</text><text>¥{{ (quote.productAmount / 100).toFixed(2) }}</text></view
@@ -277,8 +288,11 @@ async function submit() {
             ><text>合计</text><text>¥{{ (quote.payableAmount / 100).toFixed(2) }}</text></view
           ></template
         >
+        <text v-if="!quote && !quoteMessage" class="hint"
+          >填写地址后，点击下方按钮确认配送费与合计</text
+        >
         <text v-if="quoteMessage" class="hint">{{ quoteMessage }}</text>
-        <button v-if="!user.token" @click="login">手机号测试登录</button
+        <button v-if="!user.token" @click="login">微信手机号登录</button
         ><button
           v-else
           :disabled="locked || quoteLoading"
@@ -289,7 +303,11 @@ async function submit() {
         </button>
       </view>
       <view class="submit-bar"
-        ><text class="hint">不实际付款</text
+        ><view
+          ><text class="total-label">合计 · 未付款</text
+          ><text class="checkout-total">{{
+            quote ? '¥' + (quote.payableAmount / 100).toFixed(2) : '请先确认地址'
+          }}</text></view
         ><button
           class="submit-button"
           :disabled="submitting || (!quote && !submission && !createdOrderNo)"
@@ -305,7 +323,7 @@ async function submit() {
   </view>
 </template>
 <style lang="scss" scoped>
-@use '../checkout/checkout.scss';
+@use './custom-checkout.scss';
 .hint {
   display: block;
   margin-top: 16rpx;

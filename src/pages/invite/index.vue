@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { openAuthPage } from '@/utils/login-return'
 import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
 import { getInvitationApi as getInvitation } from '@/api/marketing'
@@ -24,21 +25,26 @@ onShareAppMessage(() =>
     : { title: '一花一份心意', path: '/pages/index/index' },
 )
 function login() {
-  uni.navigateTo({ url: '/pages/test-login/index?returnUrl=%2Fpages%2Finvite%2Findex' })
+  uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Finvite%2Findex' })
 }
 function copyCode() {
-  if (inviteCode.value) uni.setClipboardData({ data: inviteCode.value })
+  if (!userStore.token) return login()
+  if (!inviteCode.value) return console.info('[待对接] 获取邀请码')
+  uni.setClipboardData({ data: inviteCode.value })
 }
 function viewCoupons() {
-  uni.navigateTo({ url: '/pages/coupons/index' })
+  openAuthPage('/pages/coupons/index')
 }
 function shareTip() {
+  if (!userStore.token) return login()
+  if (!invitation.value) return console.info('[待对接] 邀请好友')
   if (invitation.value) uni.showToast({ title: '请在微信小程序内分享，或复制邀请码', icon: 'none' })
 }
 function showRules() {
+  if (!invitation.value?.rules) return console.info('[待对接] 邀请活动规则')
   uni.showModal({
     title: '邀请活动规则',
-    content: invitation.value?.rules || '邀请活动暂未开放，奖励规则将在开放后展示。',
+    content: invitation.value.rules,
     showCancel: false,
     confirmColor: '#eed261',
   })
@@ -72,6 +78,9 @@ function showRules() {
       ><button v-if="!loading && !pending && userStore.token" @click="resource.load">重试</button
       ><button v-if="!userStore.token" @click="login">登录</button></view
     >
+    <button v-if="!invitation && !loading" class="share-button" @click="shareTip">
+      分享给微信好友
+    </button>
     <template v-if="invitation">
       <view class="panel reward-panel">
         <text class="section-title">你送出邀请，我们送上花礼</text>

@@ -2,6 +2,8 @@
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 
 onLaunch(() => {
+  // 清理旧版花束演示订单，后续统一读取服务端订单。
+  uni.removeStorageSync('flower-bouquet-demo-orders-v1')
   console.log('App Launch')
 })
 onShow(() => {

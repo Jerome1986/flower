@@ -39,6 +39,7 @@ export interface OrderResponse {
   discountAmount: number
   deliveryFee: number
   storeSnapshot: { name?: string; address?: string; phone?: string; hours?: string } | null
+  serviceSnapshot?: { servicePhone?: string | null; businessHours?: string | null } | null
   addressSnapshot: { detail?: string } | null
   item: {
     specId: number

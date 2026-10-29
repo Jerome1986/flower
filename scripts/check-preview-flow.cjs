@@ -66,12 +66,6 @@ function fixture(extra = {}) {
     managedStores: [{ id: 1, name: '花店' }],
   }
   const userApi = {
-    testLoginApi: async (phone) => ({
-      data: {
-        token: phone === 'manager' ? 'manager' : 'customer',
-        userInfo: phone === 'manager' ? manager : customer,
-      },
-    }),
     getCurrentUserApi: async () => ({ data: h.account.token === 'manager' ? manager : customer }),
   }
   const orderApi = {
@@ -172,10 +166,9 @@ function fixture(extra = {}) {
     orderApi,
     manageApi,
     async login(role = 'customer') {
-      const p = h.page('test-login')
-      await p.enter()
-      await p.loginAs(role)
-      return p
+      h.account.clearProfile()
+      h.account.setProfile(role === 'manager' ? manager : customer)
+      h.account.setToken(role)
     },
     async checkout(options = {}) {
       const p = h.page('checkout')
@@ -350,8 +343,6 @@ check(
       ['api/marketing.ts', 'getWalletApi', []],
       ['api/marketing.ts', 'claimNewcomerGiftApi', []],
       ['api/marketing.ts', 'getInvitationApi', []],
-      ['api/bouquets.ts', 'getBouquetsApi', []],
-      ['pages/custom-checkout/bouquet-checkout.ts', 'submitCustom', [{}]],
       ['api/production-access.ts', 'payOrderApi', ['1']],
     ])
       await assert.rejects(h.module(module)[fn](...args), (error) =>
@@ -453,7 +444,7 @@ check(
   async () => {
     const h = fixture()
     await h.login()
-    for (const name of ['coupons', 'invite', 'bouquets', 'bouquet-detail']) {
+    for (const name of ['coupons', 'invite']) {
       const p = h.page(name)
       await p.enter({ id: '1' })
       assert(p.pending.value, name)
@@ -614,22 +605,29 @@ check('custom checkout uses independent quote and submission, never ordinary cre
   let payload,
     created = 0
   const bouquet = {
-    id: 'bouquet',
+    id: 1,
     name: '花束',
-    image: '',
+    coverImage: '',
     description: '',
     price: 99,
     unit: '束',
     specification: '标准',
     methods: ['delivery'],
     images: [],
-    deliveryArea: '市区',
-    deliveryFee: 10,
-    specs: [{ id: 'spec', name: '标准', unit: '束', price: 99, available: 3 }],
+
+    deliveryFee: 1000,
+    maxQuantity: 3,
+    specs: [{ id: 11, name: '标准', unit: '束', price: 9900 }],
   }
   const h = fixture({
     '@/pages/custom-checkout/bouquet-checkout': {
       customCheckoutEnabled: true,
+      quoteCustom: async () => ({
+        productAmount: 9900,
+        discountAmount: 0,
+        deliveryFee: 1000,
+        payableAmount: 10900,
+      }),
       submitCustom: async (input) => {
         created++
         payload = { ...input }
@@ -637,7 +635,7 @@ check('custom checkout uses independent quote and submission, never ordinary cre
       },
     },
     '@/api/bouquets': {
-      getBouquetApi: async () => bouquet,
+      getBouquetApi: async () => ({ data: bouquet }),
       quoteCustomApi: async () => ({
         productAmount: 9900,
         discountAmount: 0,
@@ -648,7 +646,7 @@ check('custom checkout uses independent quote and submission, never ordinary cre
   })
   await h.login()
   const p = h.page('custom-checkout')
-  await p.enter({ id: 'bouquet', specId: 'spec', quantity: '1' })
+  await p.enter({ id: '1', specId: '11', quantity: '1' })
   p.name.value = '收花人'
   p.phone.value = '13800000000'
   p.address.value = '市区花园路'
@@ -661,7 +659,7 @@ check('custom checkout uses independent quote and submission, never ordinary cre
   await p.refreshQuote()
   await Promise.all([p.submit(), p.submit()])
   assert.equal(created, 1)
-  assert.equal(payload.bouquetId, 'bouquet')
+  assert.equal(payload.bouquetId, '1')
   assert.equal(payload.storeId, undefined)
   assert.equal(h.submissions.length, 0)
   h.close()
@@ -674,12 +672,9 @@ check(
     assert.equal(urls.safeReturnUrl('https://example.com'), '')
     assert.equal(urls.safeReturnUrl('%E0%A4%A'), '')
     assert.equal(urls.safeReturnUrl('/pages/missing/index'), '')
-    assert.equal(urls.safeReturnUrl('/pages/test-login/index'), '')
+    assert.equal(urls.safeReturnUrl('/pages/login/index'), '')
     const back = '/pages/checkout/index?id=1&storeId=1&specId=11&quantity=1&method=pickup'
-    const login = h.page('test-login')
-    await login.enter({ returnUrl: encodeURIComponent(back) })
-    await login.loginAs('customer')
-    assert.equal(h.navigation.url, back)
+    assert.equal(urls.safeReturnUrl(encodeURIComponent(back)), back)
     const manage = h.module('pages/store-orders/order-actions.ts')
     assert.equal(manage.manageAction({ type: 'custom', status: 'pending' }), undefined)
     assert.equal(await manage.performAction({ type: 'custom', status: 'pending' }, true), undefined)

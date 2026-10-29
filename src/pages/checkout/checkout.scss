@@ -56,23 +56,80 @@
   justify-content: space-between;
   gap: 16rpx;
 }
-.method-tabs {
+.method-heading {
+  display: block;
+  padding-top: 24rpx;
+  border-top: 1rpx solid $qs-divider;
+  color: $qs-font-title;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+.checkout-page .method-tabs {
   display: flex;
-  padding: 5rpx;
-  border-radius: 36rpx;
-  background: $qs-input-bg;
+  gap: 18rpx;
+  margin-top: 18rpx;
   button {
-    padding: 10rpx 22rpx;
-    border-radius: 30rpx;
-    font-size: 23rpx;
+    flex: 1;
+    min-width: 0;
+    padding: 22rpx;
+    border: 2rpx solid $qs-divider;
+    border-radius: 20rpx;
+    background: $qs-input-bg;
+    &::after {
+      border: 0;
+    }
     &.selected {
-      background: $qs-brandColor;
-      color: $qs-font-inverse;
+      border-color: $qs-brandColor;
+      background: $qs-brandColor-light;
+      .method-title,
+      .method-top {
+        color: $qs-brandColor;
+      }
+      .method-check {
+        background: $qs-brandColor;
+        border-color: $qs-brandColor;
+        color: $qs-font-inverse;
+      }
     }
     &[disabled] {
-      color: $qs-disabled-font;
+      opacity: 0.5;
     }
   }
+}
+.method-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: $qs-font-dec;
+  .iconfont {
+    font-size: 34rpx;
+  }
+}
+.method-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30rpx;
+  height: 30rpx;
+  border: 2rpx solid $qs-border;
+  border-radius: 50%;
+  font-size: 22rpx;
+}
+.method-title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.method-description {
+  display: block;
+  margin-top: 6rpx;
+  color: $qs-font-dec;
+  font-size: 22rpx;
+}
+.submit-total {
+  flex: 1;
+  min-width: 0;
 }
 .store-summary {
   display: flex;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserRole } from '@/types/user'
 import type { SalesPeriod } from '@/types/report'
 import { computed, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
@@ -7,7 +8,7 @@ import { getManagedStoresApi as getManagedStores } from '@/api/manage-orders'
 import { getSales } from '@/pages/store-stats/sales-summary'
 import { useResource } from '@/composables/use-resource'
 const userStore = useUserStore()
-const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === 'manager')
+const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === UserRole.STORE_MANAGER)
 const period = ref<SalesPeriod>('today')
 const periods: { id: SalesPeriod; label: string }[] = [
   { id: 'today', label: '今日' },

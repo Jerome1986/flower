@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import WdPopup from '@wot-ui/ui/components/wd-popup/wd-popup.vue'
+import WdCell from '@wot-ui/ui/components/wd-cell/wd-cell.vue'
 import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { getStore, getProduct } from '@/pages/stores/shop-data'
 import type { ShopProduct } from '@/types/shop'
 import type { OrderQuote, OrderSelection, OrderSubmission } from '@/types/order-api'
 import { quoteCheckout, submitCheckout } from '@/pages/checkout/checkout-actions'
-import { getAvailableCouponsApi as getAvailableCoupons } from '@/api/marketing'
-import { couponCheckoutEnabled } from '@/pages/checkout/coupon-config'
-import { useResource } from '@/composables/use-resource'
+import { getUserCouponsApi } from '@/api/coupon'
+import type { CouponItem } from '@/types/coupon'
+import { takeCoupon } from '@/pages/coupons/selection'
+import { couponAmount } from './coupon-amount'
 import type { FlowerStore } from '@/types/store'
 import { useUserStore } from '@/stores/modules/user'
 import { getAddresses } from '@/pages/addresses/address-actions'
@@ -39,16 +42,67 @@ const addressMessage = ref('')
 const selectedAddressId = ref('')
 const selectedCouponId = ref('')
 let submittedCouponId = ''
-const couponResource = useResource(() => getAvailableCoupons(selection()))
-const coupons = couponResource.data
+const coupons = ref<CouponItem[]>([])
+const couponsLoading = ref(false)
+const couponsMessage = ref('')
+const showCoupons = ref(false)
+const selectedCoupon = computed(() =>
+  coupons.value.find((item) => String(item.id) === selectedCouponId.value),
+)
+const amounts = computed(() =>
+  quote.value
+    ? couponAmount(quote.value, selectedCoupon.value, spec.value?.price)
+    : { discountAmount: 0, payableAmount: 0 },
+)
+let couponVersion = 0
+let entryCouponId = takeCoupon(user.profile?.id)
+function canUseCoupon(coupon: CouponItem) {
+  return (
+    coupon.status === 'AVAILABLE' &&
+    new Date(coupon.expiresAt).getTime() > Date.now() &&
+    (coupon.type === 'CASH' ||
+      (coupon.exchangeSpecId === Number(specId.value) &&
+        quantity.value >= (coupon.exchangeQuantity || 1)))
+  )
+}
 async function loadCoupons() {
-  if (couponCheckoutEnabled && user.token && spec.value && !locked.value)
-    await couponResource.load()
+  if (locked.value) return
+  const version = ++couponVersion
+  const userId = user.profile?.id
+  coupons.value = []
+  couponsMessage.value = ''
+  if (!user.token || !userId) return
+  couponsLoading.value = true
+  try {
+    const res = await getUserCouponsApi(userId)
+    if (version !== couponVersion) return
+    coupons.value = res.data.filter(canUseCoupon)
+    if (entryCouponId) {
+      selectedCouponId.value = String(entryCouponId)
+      entryCouponId = undefined
+    }
+    if (selectedCouponId.value && !selectedCoupon.value) {
+      selectedCouponId.value = ''
+      uni.showToast({ title: '该优惠券当前订单不可用', icon: 'none' })
+    }
+  } catch {
+    if (version === couponVersion) couponsMessage.value = '优惠券加载失败，请重试'
+  } finally {
+    if (version === couponVersion) couponsLoading.value = false
+  }
+}
+function openCoupons() {
+  if (locked.value) return
+  if (!user.token) return login()
+  showCoupons.value = true
+  void loadCoupons()
 }
 function chooseCoupon(id: string) {
-  if (locked.value || !couponCheckoutEnabled) return
+  if (locked.value) return
+  const coupon = coupons.value.find((item) => String(item.id) === id)
+  if (id && (!coupon || !canUseCoupon(coupon))) return
   selectedCouponId.value = id
-  void refreshQuote()
+  showCoupons.value = false
 }
 const locked = computed(() => submitting.value || Boolean(submission.value))
 let requestKey = makeRequestKey()
@@ -78,7 +132,7 @@ function login() {
     quantity.value +
     '&method=' +
     method.value
-  uni.navigateTo({ url: '/pages/test-login/index?returnUrl=' + encodeURIComponent(back) })
+  uni.navigateTo({ url: '/pages/login/index?returnUrl=' + encodeURIComponent(back) })
 }
 function applyAddress(item: Address) {
   if (locked.value) return
@@ -112,12 +166,15 @@ async function loadDefaultAddress() {
     if (item && !name.value.trim() && !address.value.trim()) applyAddress(item)
   } catch (error) {
     if (token === user.token)
-      addressMessage.value = isIntegrationPending(error)
-        ? '地址管理暂未开放，请手动填写'
-        : '地址加载失败，可手动填写或重试选择'
+      addressMessage.value = isIntegrationPending(error) ? '' : '地址加载失败，可手动填写或重试选择'
   }
 }
 function resetAccount() {
+  couponVersion++
+  coupons.value = []
+  couponsLoading.value = false
+  couponsMessage.value = ''
+  entryCouponId = undefined
   loadVersion++
   quoteVersion++
   submission.value = undefined
@@ -137,6 +194,7 @@ function resetAccount() {
 }
 watch(() => user.token, resetAccount, { flush: 'sync' })
 onUnload(() => {
+  couponVersion++
   loadVersion++
   quoteVersion++
 })
@@ -147,7 +205,7 @@ async function refreshQuote() {
   quoteFailed.value = false
   if (!token || !spec.value || invalidRoute.value || locked.value) return
   try {
-    const { data } = await quoteCheckout(selection(), selectedCouponId.value)
+    const { data } = await quoteCheckout(selection())
     if (version === quoteVersion && token === user.token) quote.value = data
   } catch {
     if (version === quoteVersion && token === user.token) quoteFailed.value = true
@@ -199,7 +257,6 @@ onShow(load)
 watch(
   method,
   () => {
-    selectedCouponId.value = ''
     void refreshQuote()
     void loadCoupons()
     void loadDefaultAddress()
@@ -234,6 +291,14 @@ async function submit() {
     return uni.showToast({ title: '请填写正确的手机号', icon: 'none' })
   if (method.value === 'delivery' && !address.value.trim())
     return uni.showToast({ title: '请填写配送地址', icon: 'none' })
+  if (selectedCouponId.value) {
+    if (!selectedCoupon.value || !canUseCoupon(selectedCoupon.value)) {
+      await loadCoupons()
+      return
+    }
+    console.info('[待对接] 含券订单报价与提交', { couponId: Number(selectedCouponId.value) })
+    return
+  }
   const token = user.token
   submitting.value = true
   // 网络失败复用幂等键与不可编辑的提交快照。
@@ -267,10 +332,6 @@ async function submit() {
 </script>
 <template>
   <view class="checkout-page">
-    <view class="panel"
-      ><text class="section-title">确认订单</text
-      ><text class="hint">创建订单：只创建订单，不发起微信支付，不实际扣款。</text></view
-    >
     <view v-if="invalidRoute" class="panel"
       ><text>订单参数不完整，请重新选择商品</text
       ><button @click="goShopping">返回选购</button></view
@@ -297,20 +358,39 @@ async function submit() {
             ><text class="price">¥{{ spec.price.toFixed(2) }}</text></view
           ></view
         >
+        <text class="method-heading">收花方式</text>
         <view class="method-tabs">
           <button
             :disabled="locked || !product.methods.includes('pickup')"
             :class="{ selected: method === 'pickup' }"
+            :aria-pressed="method === 'pickup'"
             @click="changeMethod('pickup')"
           >
-            门店自取
+            <view class="method-top"
+              ><text class="iconfont icon-shouye1" /><text class="method-check">{{
+                method === 'pickup' ? '✓' : ''
+              }}</text></view
+            >
+            <text class="method-title">门店自取</text>
+            <text class="method-description">{{
+              product.methods.includes('pickup') ? '到店领取鲜花' : '暂不支持自取'
+            }}</text>
           </button>
           <button
             :disabled="locked || !product.methods.includes('delivery')"
             :class="{ selected: method === 'delivery' }"
+            :aria-pressed="method === 'delivery'"
             @click="changeMethod('delivery')"
           >
-            配送到家
+            <view class="method-top"
+              ><text class="iconfont icon-address" /><text class="method-check">{{
+                method === 'delivery' ? '✓' : ''
+              }}</text></view
+            >
+            <text class="method-title">配送到家</text>
+            <text class="method-description">{{
+              product.methods.includes('delivery') ? '鲜花送到你身边' : '暂不支持配送'
+            }}</text>
           </button>
         </view>
         <text v-if="method === 'delivery'" class="hint">配送区域：{{ store.deliveryArea }}</text>
@@ -358,69 +438,246 @@ async function submit() {
         />
       </view>
       <view class="panel">
-        <text class="section-title">金额明细</text
-        ><text v-if="!couponCheckoutEnabled" class="hint">本阶段暂不使用优惠券</text>
-        <view v-else>
-          <text class="hint">{{
-            couponResource.loading.value ? '正在加载可用券…' : couponResource.message.value
-          }}</text>
-          <button
-            v-if="couponResource.message.value && !couponResource.pending.value"
-            :disabled="locked"
-            @click="loadCoupons"
-          >
-            重试加载优惠券
-          </button>
-          <button :disabled="locked" @click="chooseCoupon('')">不使用优惠券</button>
-          <button
-            v-for="coupon in coupons || []"
-            :key="coupon.id"
-            :disabled="locked || coupon.status !== 'available'"
-            @click="chooseCoupon(coupon.id)"
-          >
-            {{ selectedCouponId === coupon.id ? '已选 · ' : '' }}{{ coupon.title }}
-          </button>
-          <text v-if="coupons && !coupons.length" class="hint">暂无可用优惠券</text>
-        </view>
+        <text class="section-title">金额明细</text>
+        <wd-cell
+          title="优惠券"
+          :value="selectedCoupon?.name || '选择优惠券'"
+          clickable
+          @click="openCoupons"
+        >
+          <template #suffix><text class="iconfont icon-youjiantou1 coupon-arrow" /></template>
+        </wd-cell>
         <template v-if="quote">
           <view class="amount-row"
             ><text>商品金额</text><text>¥{{ (quote.productAmount / 100).toFixed(2) }}</text></view
           >
-          <view v-if="quote.discountAmount" class="amount-row"
-            ><text>优惠金额</text><text>−¥{{ (quote.discountAmount / 100).toFixed(2) }}</text></view
+          <view v-if="amounts.discountAmount" class="amount-row"
+            ><text>优惠金额</text
+            ><text>−¥{{ (amounts.discountAmount / 100).toFixed(2) }}</text></view
           >
           <view class="amount-row"
             ><text>配送费</text><text>¥{{ (quote.deliveryFee / 100).toFixed(2) }}</text></view
           >
           <view class="amount-row"
-            ><text>订单金额（未付款）</text
-            ><text class="price">¥{{ (quote.payableAmount / 100).toFixed(2) }}</text></view
+            ><text>合计</text
+            ><text class="price">¥{{ (amounts.payableAmount / 100).toFixed(2) }}</text></view
           >
         </template>
         <view v-else-if="user.token"
           ><text v-if="quoteFailed" class="hint">金额加载失败，请重试</text
           ><button :disabled="locked" @click="refreshQuote">刷新金额</button></view
         >
-        <button v-if="!user.token" @click="login">手机号测试登录</button>
+        <button v-if="!user.token" @click="login">登录</button>
       </view>
-      <view class="submit-bar"
-        ><text class="hint">不实际付款</text
-        ><button
+      <view class="submit-bar">
+        <view class="submit-total" v-if="quote"
+          ><text class="hint">合计</text
+          ><text class="price">¥{{ (amounts.payableAmount / 100).toFixed(2) }}</text
+          ><text v-if="amounts.discountAmount" class="hint"
+            >已优惠 ¥{{ (amounts.discountAmount / 100).toFixed(2) }}</text
+          ></view
+        >
+        <button
           class="submit-button"
           :loading="submitting"
           :disabled="submitting || (!createdOrderNo && !submission && (!quote || !store.open))"
           @click="submit"
         >
-          {{
-            createdOrderNo ? '查看已创建订单' : locked ? '重试提交（不付款）' : '确认下单（不付款）'
-          }}
+          {{ createdOrderNo ? '查看已创建订单' : locked ? '重试提交' : '确认下单' }}
         </button></view
       >
     </template>
+    <wd-popup
+      v-model="showCoupons"
+      position="bottom"
+      closable
+      safe-area-inset-bottom
+      :z-index="100"
+      custom-style="border-radius: 24px 24px 0 0; background: #f6f7f5;"
+    >
+      <view class="coupon-sheet">
+        <view class="coupon-sheet-header"
+          ><text class="coupon-sheet-title">选择优惠券</text
+          ><text class="coupon-sheet-subtitle">每笔订单可使用一张优惠券</text></view
+        >
+        <scroll-view scroll-y class="coupon-sheet-scroll">
+          <view class="coupon-sheet-list">
+            <wd-cell
+              title="不使用优惠券"
+              :value="!selectedCouponId ? '✓' : ''"
+              clickable
+              custom-style="border-radius: 12px; overflow: hidden;"
+              @click="chooseCoupon('')"
+            />
+            <view v-if="couponsLoading || couponsMessage" class="coupon-sheet-feedback">{{
+              couponsLoading ? '正在加载优惠券…' : couponsMessage
+            }}</view>
+            <wd-cell
+              v-if="couponsMessage"
+              title="重新加载"
+              clickable
+              @click="loadCoupons"
+            >
+              <template #suffix><text class="iconfont icon-youjiantou1 coupon-arrow" /></template>
+            </wd-cell>
+            <view
+              v-for="coupon in coupons"
+              :key="coupon.id"
+              class="coupon-sheet-item"
+              :class="{ 'is-selected': selectedCouponId === String(coupon.id) }"
+              @click="!couponsLoading && chooseCoupon(String(coupon.id))"
+            >
+              <view class="coupon-sheet-main">
+                <view class="coupon-sheet-price"
+                  ><text class="coupon-sheet-amount">{{
+                    coupon.type === 'CASH' ? '¥' + coupon.cashAmount : '兑花'
+                  }}</text
+                  ><text class="coupon-sheet-kind">{{
+                    coupon.type === 'CASH' ? '现金抵扣券' : '商品兑换券'
+                  }}</text></view
+                >
+                <view class="coupon-sheet-copy"
+                  ><text class="coupon-sheet-name">{{ coupon.name }}</text
+                  ><text class="coupon-sheet-description">{{
+                    coupon.type === 'CASH'
+                      ? '全部商品可用'
+                      : [coupon.exchangeProductName, coupon.exchangeSpecName]
+                          .filter(Boolean)
+                          .join(' · ')
+                  }}</text
+                  ><text class="coupon-sheet-expiry"
+                    >{{ coupon.expiresAt.slice(0, 10).replace(/-/g, '.') }} 到期</text
+                  ></view
+                >
+                <text class="coupon-sheet-check">{{
+                  selectedCouponId === String(coupon.id) ? '✓' : ''
+                }}</text>
+              </view>
+            </view>
+            <view
+              v-if="!couponsLoading && !couponsMessage && !coupons.length"
+              class="coupon-sheet-feedback"
+              >暂无可用优惠券</view
+            >
+          </view>
+        </scroll-view>
+      </view>
+    </wd-popup>
   </view>
 </template>
 <style lang="scss" scoped>
 @use './checkout.scss';
+.coupon-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: 20rpx;
+  line-height: 1;
+  color: #849087;
+}
+.coupon-sheet {
+  color: #283c34;
+}
+.coupon-sheet-header {
+  padding: 48rpx 72rpx 32rpx;
+  text-align: center;
+}
+.coupon-sheet-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.coupon-sheet-subtitle {
+  display: block;
+  margin-top: 12rpx;
+  color: #849087;
+  font-size: 23rpx;
+}
+.coupon-sheet-scroll {
+  height: 58vh;
+  flex: none;
+}
+.coupon-sheet-list {
+  padding: 0 28rpx 40rpx;
+}
+.coupon-sheet-item {
+  margin-top: 22rpx;
+  border: 2rpx solid #e4e9e2;
+  border-radius: 22rpx;
+  background: #fff;
+}
+.coupon-sheet-item.is-selected {
+  border-color: $qs-brandColor;
+  background: $qs-brandColor-light;
+}
+.coupon-sheet-main {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  padding: 30rpx 22rpx;
+}
+.coupon-sheet-price {
+  flex: none;
+  width: 140rpx;
+  text-align: center;
+  color: $qs-brandColor;
+}
+.coupon-sheet-amount {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.coupon-sheet-kind {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+}
+.coupon-sheet-copy {
+  flex: 1;
+  min-width: 0;
+  padding-left: 22rpx;
+  border-left: 1rpx dashed #dce3d8;
+}
+.coupon-sheet-name {
+  display: block;
+  font-size: 27rpx;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.coupon-sheet-description,
+.coupon-sheet-expiry {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: #849087;
+}
+.coupon-sheet-check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34rpx;
+  height: 34rpx;
+  border: 2rpx solid #dce3d8;
+  border-radius: 50%;
+  font-size: 24rpx;
+}
+.is-selected .coupon-sheet-check {
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  border-color: $qs-brandColor;
+}
+.coupon-sheet-feedback {
+  padding: 60rpx 20rpx;
+  text-align: center;
+  color: #849087;
+  font-size: 25rpx;
+}
 .remark-input {
   margin-top: 24rpx;
   width: 100%;
@@ -434,8 +691,5 @@ async function submit() {
 .product-name,
 .hint {
   display: block;
-}
-.method-tabs {
-  margin-top: 24rpx;
 }
 </style>

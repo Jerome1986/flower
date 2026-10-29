@@ -4,7 +4,10 @@ import { useUserStore } from '@/stores/modules/user'
 import { integrationMessage, isIntegrationPending } from '@/utils/integration'
 
 /** 账户隔离、最后一次请求生效，未接入与失败/空数据分别展示。 */
-export function useResource<T>(fetcher: () => Promise<T>, authenticated = true) {
+export function useResource<T>(
+  fetcher: () => Promise<T>,
+  authenticated: boolean | (() => boolean) = true,
+) {
   const user = useUserStore()
   const data = shallowRef<T>()
   const loading = ref(false)
@@ -29,7 +32,7 @@ export function useResource<T>(fetcher: () => Promise<T>, authenticated = true) 
     message.value = ''
     pending.value = false
     loading.value = false
-    if (authenticated && !token) {
+    if ((typeof authenticated === 'function' ? authenticated() : authenticated) && !token) {
       message.value = '请先登录'
       return
     }

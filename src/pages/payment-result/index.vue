@@ -12,13 +12,14 @@ import { getOrder } from '@/pages/orders/order-data'
 // 支付结果只展示当前用户自己的订单。
 const userStore = useUserStore()
 const orderNo = ref('')
+
 onLoad((options) => {
   orderNo.value = options?.orderNo || ''
 })
 const resource = useResource(() => {
   if (!orderNo.value) throw new Error('订单编号缺失')
   return getOrder(orderNo.value)
-})
+}, true)
 const order = computed(() => resource.data.value || null)
 const loading = resource.loading
 const failed = computed(() => Boolean(resource.message.value))
@@ -26,19 +27,20 @@ async function loadOrder() {
   await resource.load()
 }
 
-// 从确认订单页读取模拟订单，不请求真实支付。
+// 从服务端读取已创建订单，当前未接入在线支付。
 onShow(() => {
   void loadOrder()
 })
 // 返回下单页继续挑选鲜花。
 function goShopping() {
+  if (order.value?.type === 'custom') return uni.redirectTo({ url: '/pages/bouquets/index' })
   uni.switchTab({ url: '/pages/order/index' })
 }
 // 返回首页查看其他鲜花和活动。
 function goHome() {
   uni.switchTab({ url: '/pages/index/index' })
 }
-// 打开当前模拟订单的详情。
+// 打开当前订单的详情。
 function viewOrder() {
   if (order.value)
     uni.navigateTo({ url: `/pages/order-detail/index?orderNo=${order.value.orderNo}` })
@@ -52,9 +54,7 @@ function viewOrder() {
       <text class="success-title">{{
         order.status === 'unpaid' ? '下单成功' : orderTitle(order)
       }}</text>
-      <text class="success-copy">
-        {{ '订单已保存，可在我的订单中查看' }}
-      </text>
+      <text class="success-copy"> 订单已保存，可在我的订单中查看 </text>
       <text class="amount">
         <text class="currency">¥</text>
         {{ order.total.toFixed(2) }}

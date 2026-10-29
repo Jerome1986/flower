@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { UserRole } from '@/types/user'
+import { resolveApiImage } from '@/utils/http'
+import { openAuthPage } from '@/utils/login-return'
 import { computed, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getSales } from '@/pages/store-stats/sales-summary'
@@ -9,12 +12,13 @@ import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
 import { useUserStore } from '@/stores/modules/user'
 import { orderEntries, serviceEntries } from './page-data'
 import { getCurrentUserApi as getCurrentUser } from '@/api/user'
-import { toProfile } from '@/pages/test-login/user-profile'
 
-// 当前账户信息与模拟登录状态。
+// 当前账户信息与登录状态。
 const userStore = useUserStore()
 // 当前账户是否为店长，统一控制管理入口与用户订单区。
-const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === 'manager')
+const isManager = computed(
+  () => Boolean(userStore.token) && userStore.profile?.role === UserRole.STORE_MANAGER,
+)
 const storeResource = useResource(async () => (await getManagedStores()).data)
 const managerStore = computed(() => storeResource.data.value?.[0])
 const salesResource = useResource(() =>
@@ -40,7 +44,7 @@ async function loadProfile() {
   try {
     const { data } = await getCurrentUser()
     if (version !== profileVersion || token !== userStore.token) return
-    userStore.setProfile(toProfile(data))
+    userStore.setProfile(data)
     if (!isManager.value) return
     await storeResource.load()
     if (version === profileVersion && managerStore.value) await salesResource.load()
@@ -66,34 +70,27 @@ const phoneLabel = computed(() => {
     : '愿每一天，都有鲜花相伴'
 })
 
-// 打开独立测试登录页面。
+// 保留测试登录占位入口。
 function openTestLogin() {
-  uni.navigateTo({ url: '/pages/test-login/index' })
+  console.log('测试登录')
 }
 // 打开当前店长绑定门店的订单管理。
 function openStoreOrders() {
-  uni.navigateTo({ url: '/pages/store-orders/index' })
+  openAuthPage('/pages/store-orders/index')
 }
 
 // 打开我的订单并预选对应状态。
 function openOrders(status = 'all') {
-  if (userStore.profile?.role === 'manager') return openStoreOrders()
-  uni.navigateTo({ url: `/pages/orders/index?status=${status}` })
+  if (isManager.value) return openStoreOrders()
+  openAuthPage(`/pages/orders/index?status=${status}`)
 }
 
 // 统一处理账户、卡包、邀请、地址和客服入口。
 function openEntry(title: string) {
   if (title === '微信手机号登录' || (title === '登录信息' && !isLoggedIn.value))
-    return openTestLogin()
+    return uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fmy%2Findex' })
   if (title === '登录信息') {
-    uni.showModal({
-      title: '当前账户',
-      content: `${displayName.value}\n${phoneLabel.value}\n${
-        userStore.profile?.role === 'manager' ? '店长账户' : '用户账户'
-      }`,
-      showCancel: false,
-      confirmColor: '#eed261',
-    })
+    openAuthPage('/pages/profile/index')
     return
   }
   if (title === '联系客服') {
@@ -106,7 +103,7 @@ function openEntry(title: string) {
     return
   }
   if (title === '地址管理') {
-    uni.navigateTo({ url: '/pages/addresses/index' })
+    openAuthPage('/pages/addresses/index')
     return
   }
   if (title === '邀请好友') {
@@ -114,7 +111,7 @@ function openEntry(title: string) {
     return
   }
   if (title === '我的优惠券') {
-    uni.navigateTo({ url: '/pages/coupons/index' })
+    openAuthPage('/pages/coupons/index')
     return
   }
   uni.showModal({
@@ -130,13 +127,7 @@ function openEntry(title: string) {
 
 // 展示花礼券的使用规则。
 function showRules() {
-  uni.showModal({
-    title: '花礼使用说明',
-    content: '花礼券暂未开放，具体使用规则将在活动开放后展示。',
-    showCancel: false,
-    confirmText: '知道了',
-    confirmColor: '#eed261',
-  })
+  console.info('[待对接] 花礼券使用规则')
 }
 
 // 返回买花列表。
@@ -152,7 +143,8 @@ function goShopping() {
       <text class="eyebrow">一花一份心意</text>
       <view class="profile-row">
         <button class="avatar" aria-label="查看登录信息" @click="openEntry('登录信息')">
-          <text class="iconfont icon-hua" />
+          <image v-if="userStore.profile?.avatar" :src="resolveApiImage(userStore.profile.avatar)" mode="aspectFill" style="width: 100%; height: 100%; border-radius: 50%" />
+          <text v-else class="iconfont icon-hua" />
         </button>
         <button class="profile-copy" @click="openEntry('登录信息')">
           <text class="profile-name">{{ isLoggedIn ? displayName : '你好，爱花的你' }}</text>

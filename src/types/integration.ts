@@ -1,8 +1,7 @@
 export type { SalesQuery, SalesSummary } from './sales'
 export type { AddressInput } from './address'
-import type { Coupon } from './coupon'
+import type { Coupon, CouponItem } from './coupon'
 import type { InviteRecord } from './invite'
-import type { FlowerProduct } from './product'
 import type { OrderQuote } from './order-api'
 
 /** 以下为前端需求模型，不是已确认的后端请求/响应协议。金额注明单位。 */
@@ -10,10 +9,18 @@ export interface CouponWallet {
   coupons: Coupon[]
   rules: string
 }
+/** 新人花礼状态，与后端查询和领取接口保持一致。 */
 export interface NewcomerGift {
-  coupon: Coupon | null
-  claimable: boolean
-  description: string
+  activity: { id: number; name: string } | null
+  activityAvailable: boolean
+  eligible: boolean
+  claimDeadline: string
+  claimed: boolean
+  canClaim: boolean
+  reasonCode: string | null
+  reason: string | null
+  coupon: CouponItem | null
+  newlyClaimed?: boolean
 }
 export interface InvitationSummary {
   code: string
@@ -25,12 +32,7 @@ export interface InvitationSummary {
   rewardCount: number
   records: InviteRecord[]
 }
-export interface Bouquet extends FlowerProduct {
-  images: string[]
-  deliveryArea: string
-  deliveryFee: number
-  specs: { id: string; name: string; unit: string; price: number; available: number }[]
-}
+export type { Bouquet } from './bouquet'
 export interface CustomSelection {
   bouquetId: string
   specId: string

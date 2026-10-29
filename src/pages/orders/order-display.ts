@@ -26,7 +26,8 @@ export function orderTitle(order: PreviewOrder) {
 // 订单列表与详情共用履约提示。
 export function orderHint(order: PreviewOrder) {
   if (order.status === 'unpaid') return '订单尚未付款'
-  if (order.status === 'cancelled') return '订单已结束，预留库存已释放'
+  if (order.status === 'cancelled')
+    return order.type === 'custom' ? '订单已结束' : '订单已结束，预留库存已释放'
   if (order.status === 'completed') return '这份心意已送达，感谢你让鲜花走进日常'
   if (order.status === 'delivering') return '请保持电话畅通，耐心等待鲜花送达'
   if (order.type === 'custom') return '平台将安排合作方制作配送'
@@ -41,7 +42,7 @@ export function orderHint(order: PreviewOrder) {
 export function orderPaymentLabel(order: PreviewOrder) {
   if (order.paymentStatus === 'PAID') return '已付款'
   if (order.paymentStatus === 'NOT_REQUIRED')
-    return order.total > 0 ? '支付待接入' : '0元订单，无需付款'
+    return order.total > 0 ? '未付款' : '0元订单，无需付款'
   if (order.paymentStatus === 'CLOSED') return '未付款 · 已关闭'
   return '未付款'
 }

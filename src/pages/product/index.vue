@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { openAuthPage } from '@/utils/login-return'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getSelectedStore, getStore, getProduct } from '@/pages/stores/shop-data'
 import type { ShopProduct } from '@/types/shop'
@@ -110,7 +111,7 @@ function changeMethod(value: 'pickup' | 'delivery') {
 function buyNow() {
   if (!canBuy.value) return
   if (!store.value) return chooseStore()
-  uni.navigateTo({ url: `/pages/checkout/index?id=${productId.value}&storeId=${storeId.value}&specId=${specId.value}&quantity=${quantity.value}&method=${method.value}` })
+  openAuthPage(`/pages/checkout/index?id=${productId.value}&storeId=${storeId.value}&specId=${specId.value}&quantity=${quantity.value}&method=${method.value}`)
 }
 // 返回下单页继续选花和选择门店。
 function goShopping() {

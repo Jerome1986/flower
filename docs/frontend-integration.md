@@ -35,7 +35,7 @@
 
 | 用途                             | 方法与路径（相对 VITE_API_BASE_URL）                                                                         |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 测试登录、当前用户               | POST /user/test-login；GET /user/me                                                                          |
+| 微信登录、当前用户               | POST /user/wx-login；GET /user/me                                                                          |
 | 门店列表、详情                   | GET /shop/stores；GET /shop/stores/:id                                                                       |
 | 门店商品列表、详情               | GET /shop/stores/:storeId/products；GET /shop/stores/:storeId/products/:id                                   |
 | 普通报价、创建                   | POST /user/orders/quote；POST /user/orders                                                                   |
@@ -107,17 +107,21 @@
 
 ### D. 花束与定制订单
 
+更新（2026-10-14）：完整业务流程、当前字段协议、请求响应示例和演示说明见 [定制鲜花业务流程与接口交接](./bouquet-business-flow.md)。固定成品款式，平台配送，不支持自由搭配或真实付款。前端接口已定义，真实后端能力仍需逐项联调确认。
+
 入口：src/api/bouquets.ts → src/pages/custom-checkout/bouquet-checkout.ts；独立页面：src/pages/custom-checkout/index.vue。
 
 | 操作       | 前端服务                     | 所需信息                                                                                                             |
 | ---------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 列表/详情  | getBouquets / getBouquet(id) | Bouquet：id、name、image、images、description、展示价（元）、规格列表（id/name/unit/price/available）、配送区域/费用 |
+| 列表/详情  | getBouquets / getBouquet(id) | API 使用 BouquetResponse（整数分、数字 ID）；页面转换为 Bouquet（元、字符串 ID）；规格不包含 available，数量上限使用 maxQuantity |
 | 配送报价   | quoteCustom(selection)       | bouquetId、specId、quantity、address → CustomQuote（分）                                                             |
 | 创建测试单 | submitCustom(input)          | 上述选项 + requestKey、contactName、contactPhone、remark、expectedAmount（分）→ 可映射 OrderResponse 的结果          |
 
 不传虚构门店 ID，不调用普通订单创建接口。联系人手动编辑与地址选择均可用；地址改变立即清空旧报价，点击“确认地址并刷新金额”后才可提交。
 
-必须确认定制订单由已有用户订单接口读取、状态能映射现有用户详情、且店长接口不包含定制订单。商品、报价、提交及查询全部联调通过后开启 pages/custom-checkout/bouquet-checkout.ts 的 customCheckoutEnabled。此开关关闭时，即使直接访问独立结算 URL 也不会报价或下单。
+必须确认定制订单由已有用户订单接口读取、状态能映射现有用户详情、且店长接口不包含定制订单。当前 customCheckoutEnabled 已开启，真实请求使用 GET /shop/bouquets、GET /shop/bouquets/:id、POST /user/custom-orders/quote、POST /user/custom-orders；这不表示后端已完成联调。
+
+开发环境可显式设置 VITE_BOUQUET_MOCK=true，使用独立花束模拟数据、手动收货信息和本地演示订单，无需真实登录。该例外仅用于花束开发演示，不改变其他业务数据来源。默认及生产构建关闭，不自动回退、不复用旧模拟模块，不将演示订单混入真实列表。详情和结果支持本地只读查询；关闭开关后演示订单号也不会发给后端。
 
 ### E. 正式微信登录与支付（后续）
 

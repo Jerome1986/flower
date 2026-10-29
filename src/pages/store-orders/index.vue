@@ -1,15 +1,15 @@
 <script setup lang="ts">
+import { UserRole } from '@/types/user'
 import type { PreviewOrder } from '@/types/order'
 import { computed, ref, watch } from 'vue'
 import { onShow, onReachBottom, onUnload } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
 import { getCurrentUserApi as getCurrentUser } from '@/api/user'
-import { toProfile } from '@/pages/test-login/user-profile'
 import { getManagedStoresApi as getManagedStores } from '@/api/manage-orders'
 import { getManageOrders, manageAction, performAction } from '@/pages/store-orders/order-actions'
 import { orderStatus } from '@/pages/orders/order-display'
 const userStore = useUserStore()
-const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === 'manager')
+const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === UserRole.STORE_MANAGER)
 const stores = ref<{ id: number; name: string }[]>([])
 const selectedStoreId = ref<number>()
 const store = computed(() => stores.value.find((item) => item.id === selectedStoreId.value))
@@ -96,7 +96,7 @@ async function init() {
   try {
     const { data } = await getCurrentUser()
     if (version !== initVersion || token !== userStore.token) return
-    userStore.setProfile(toProfile(data))
+    userStore.setProfile(data)
     if (!isManager.value) {
       orders.value = []
       return

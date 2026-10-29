@@ -4,10 +4,12 @@ import { getSelectedStore, getProducts } from '@/pages/stores/shop-data'
 import type { ShopProduct } from '@/types/shop'
 import { computed } from 'vue'
 import { useUserStore } from '@/stores/modules/user'
-import { getNewcomerGiftApi as getNewcomerGift, claimNewcomerGiftApi as claimNewcomerGift } from '@/api/marketing'
+import {
+  getNewcomerGiftApi as getNewcomerGift,
+  claimNewcomerGiftApi as claimNewcomerGift,
+} from '@/api/marketing'
 import { rememberInvitation } from '@/pages/invite/invitation-actions'
 import { useResource } from '@/composables/use-resource'
-import { integrationMessage } from '@/utils/integration'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 const recommended = ref<ShopProduct[]>([])
@@ -34,38 +36,62 @@ const userStore = useUserStore()
 onLoad((options) => {
   rememberInvitation(options?.inviteCode)
 })
-const giftResource = useResource(getNewcomerGift)
+// 查询花礼状态，提取请求工具包装中的业务数据。
+async function loadNewcomerGift() {
+  // 1. 请求当前账户的服务端状态，不使用本地模拟券。
+  const res = await getNewcomerGift()
+  // 2. 返回业务数据，交由资源工具处理账户隔离和加载状态。
+  return res.data
+}
+const giftResource = useResource(loadNewcomerGift)
 const gift = giftResource.data
 const claiming = ref(false)
+// 展示已领券状态或服务端返回的不可领取原因。
+const giftDescription = computed(() => {
+  // 1. 已领券优先展示使用状态，过期和已使用也不能重复领取。
+  if (gift.value?.coupon) {
+    const labels = { AVAILABLE: '已领取，可前往花礼券查看', LOCKED: '花礼券使用中', USED: '花礼券已使用', EXPIRED: '花礼券已过期' }
+    return labels[gift.value.coupon.status]
+  }
+  // 2. 可领取时展示提示，否则沿用后端的具体原因。
+  return gift.value?.canClaim ? '新人花礼待领取，领取后开始计算有效期' : gift.value?.reason
+})
 const couponButtonLabel = computed(() =>
   gift.value?.coupon
     ? '查看新人花礼'
-    : gift.value?.claimable
+    : gift.value?.canClaim
     ? '领取新人花礼'
     : gift.value
     ? '暂无可领取花礼'
-    : '新人花礼暂未开放',
+    : '领取新人花礼',
 )
 onShow(() => {
   void loadRecommendations()
-  void giftResource.load()
+  if (!claiming.value) void giftResource.load()
 })
+// 登录后主动领取新人花礼，已领取时打开卡包。
 async function claimNewUserCoupon() {
-  if (!userStore.token) return uni.navigateTo({ url: '/pages/test-login/index?from=coupon' })
-  if (claiming.value || !gift.value) return
+  // 1. 未登录先进入登录页，加载或领取期间阻止重复点击。
+  if (!userStore.token) return uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fcoupons%2Findex' })
+  if (claiming.value || giftResource.loading.value) return
+  // 2. 状态尚未获取时重新查询，已有券直接查看，不能领取时不发请求。
+  if (!gift.value) return giftResource.load()
   if (gift.value.coupon) return uni.navigateTo({ url: '/pages/coupons/index' })
-  if (!gift.value.claimable) return
+  if (!gift.value.canClaim) return
   const token = userStore.token
   claiming.value = true
   try {
-    const result = await claimNewcomerGift()
+    // 3. 请求后端重新校验并发券，切换账户后忽略旧账户结果。
+    const res = await claimNewcomerGift()
     if (token !== userStore.token) return
-    gift.value = result
+    gift.value = res.data
+    // 4. 发券成功后打开卡包，卡包会重新读取服务端券列表。
     uni.navigateTo({ url: '/pages/coupons/index' })
-  } catch (error) {
-    if (token === userStore.token)
-      uni.showToast({ title: integrationMessage(error, '领取失败，请重试'), icon: 'none' })
+  } catch {
+    // 5. 请求工具统一提示错误，刷新状态以同步活动变化或实际已发出的券。
+    if (token === userStore.token) await giftResource.load()
   } finally {
+    // 6. 请求结束后恢复按钮。
     claiming.value = false
   }
 }
@@ -121,8 +147,8 @@ function formatPrice(amount: number) {
       <view class="fulfillment-options">
         <button class="fulfillment-option" @click="goShopping('pickup')">
           <view class="entry-icon"><text class="iconfont icon-shouye1" /></view>
-          <text class="entry-english">PICK UP</text>
           <text class="entry-title">门店自提</text>
+          <text class="entry-english">PICK UP</text>
           <text class="muted">路过花店，带一束回家</text>
         </button>
         <button class="fulfillment-option" @click="goShopping('delivery')">
@@ -134,8 +160,12 @@ function formatPrice(amount: number) {
       </view>
     </view>
     <button class="order-bar" @click="goOrders">
-      <view class="order-bar__title"><UniIcons type="list" size="20" color="#ffffff" /><text>订单中心</text></view>
-      <view class="order-bar__hint"><text>新零售鲜花配送到家</text><text class="iconfont icon-youjiantou1" /></view>
+      <view class="order-bar__title"
+        ><UniIcons type="list" size="20" color="#ffffff" /><text>订单中心</text></view
+      >
+      <view class="order-bar__hint"
+        ><text>新零售鲜花配送到家</text><text class="iconfont icon-youjiantou1"
+      /></view>
     </button>
     <button class="custom-card" @click="goBouquets">
       <view class="custom-card__copy">
@@ -149,21 +179,30 @@ function formatPrice(amount: number) {
         <text class="gift-card__icon iconfont icon-liwuhe" />
         <text class="entry-title">新注册用户可以免费领取一束鲜花</text>
         <button class="invite-link" @click="goInvite">分享给朋友，他领一束，你也得一束</button>
-        <text v-if="gift?.description || giftResource.loading.value || giftResource.message.value" class="gift-status">{{
-          gift?.description || (giftResource.loading.value ? '正在加载花礼…' : giftResource.message.value)
-        }}</text>
+        <text
+          v-if="giftDescription || giftResource.loading.value || giftResource.message.value"
+          class="gift-status"
+          >{{
+            giftDescription ||
+            (giftResource.loading.value ? '正在加载花礼…' : giftResource.message.value)
+          }}</text
+        >
         <button
           v-if="userStore.token && giftResource.message.value && !giftResource.pending.value"
           class="text-button"
           @click="giftResource.load"
-        >重试</button>
+        >
+          重试
+        </button>
       </view>
       <button
-        class="round-action gift-action"
-        :disabled="claiming || (!!userStore.token && (!gift || (!gift.coupon && !gift.claimable)))"
+        class="round-action"
+        :disabled="claiming || giftResource.loading.value || (!!userStore.token && !!gift && !gift.coupon && !gift.canClaim)"
         :aria-label="couponButtonLabel"
         @click="claimNewUserCoupon"
-      >{{ claiming ? '领取中' : !userStore.token ? '注册' : gift?.coupon ? '查看' : '领取' }}</button>
+      >
+        {{ claiming ? '领取中' : !userStore.token ? '注册' : gift?.coupon ? '查看' : '领取' }}
+      </button>
     </view>
     <view class="section-heading">
       <view>

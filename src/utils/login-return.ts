@@ -1,4 +1,5 @@
 import pages from '@/pages.json'
+import { useUserStore } from '@/stores'
 const paths = new Set(pages.pages.map((page) => '/' + page.path))
 export function safeReturnUrl(value = '') {
   // uni-app 已解析查询参数；仅在值仍编码时解码一次。
@@ -9,7 +10,17 @@ export function safeReturnUrl(value = '') {
     return ''
   }
   const path = url.split('?')[0]
-  return paths.has(path) && path !== '/pages/test-login/index' ? url : ''
+  return paths.has(path) && path !== '/pages/login/index' ? url : ''
+}
+// 在业务入口判断登录，登录后继续打开目标页面。
+export function openAuthPage(url: string) {
+  const target = safeReturnUrl(url)
+  if (!target) return
+  uni.navigateTo({
+    url: useUserStore().token
+      ? target
+      : '/pages/login/index?returnUrl=' + encodeURIComponent(target),
+  })
 }
 export function currentReturnUrl() {
   const pages = getCurrentPages()

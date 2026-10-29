@@ -19,11 +19,11 @@ const userStore = useUserStore()
 // 当前需要读取的订单编号。
 const orderNo = ref('')
 
-// 当前展示的模拟订单快照。
+// 当前展示的服务端订单快照。
 const resource = useResource(() => {
   if (!orderNo.value) throw new Error('订单编号缺失')
   return getOrder(orderNo.value)
-})
+}, true)
 const order = computed(() => resource.data.value || null)
 const loading = resource.loading
 const failed = computed(() => Boolean(resource.message.value))
@@ -36,7 +36,8 @@ function cancel() {
   const token = userStore.token
   uni.showModal({
     title: '取消订单',
-    content: '取消后将释放预留库存，确认取消？',
+    content:
+      order.value.type === 'custom' ? '确认取消这笔花束订单？' : '取消后将释放预留库存，确认取消？',
     success: async (result) => {
       if (!result.confirm || cancelling.value || token !== userStore.token) return
       cancelling.value = true
@@ -51,7 +52,7 @@ function cancel() {
     },
   })
 }
-// 订单履约进度，模拟订单默认为待接单。
+// 订单履约进度。
 const stages = computed(() => orderStages(order.value))
 // 当前履约步骤，与店长页面一致。
 const stageIndex = computed(() => orderStageIndex(order.value))
@@ -59,11 +60,11 @@ const stageIndex = computed(() => orderStageIndex(order.value))
 const statusTitle = computed(() => (order.value ? orderTitle(order.value) : ''))
 // 不同履约阶段的用户提示。
 const statusCopy = computed(() => (order.value ? orderHint(order.value) : ''))
-// 兼容此前提交的模拟订单商品金额。
+// 当前订单商品金额。
 const productAmount = computed(() => order.value?.productAmount ?? order.value?.total ?? 0)
-// 当前订单的模拟配送费。
+// 当前订单配送费。
 const deliveryFee = computed(() => order.value?.deliveryFee ?? 0)
-// 当前订单的模拟优惠金额。
+// 当前订单优惠金额。
 const discount = computed(() => order.value?.discount ?? 0)
 
 // 数据以当前账户的服务端响应为准。
@@ -98,7 +99,11 @@ function contactStore() {
 }
 // 返回下单页继续选购鲜花。
 function goShopping() {
+  if (order.value?.type === 'custom') return uni.redirectTo({ url: '/pages/bouquets/index' })
   uni.switchTab({ url: '/pages/order/index' })
+}
+function pay() {
+  console.info('[待对接] 微信支付')
 }
 </script>
 
@@ -210,7 +215,7 @@ function goShopping() {
       </view>
       <view class="info-row">
         <text>下单时间</text>
-        <text class="info-value">{{ order.createdAt || '演示订单' }}</text>
+        <text class="info-value">{{ order.createdAt || '—' }}</text>
       </view>
       <view class="info-row">
         <text>支付状态</text>
@@ -233,6 +238,7 @@ function goShopping() {
       }}
     </text>
     <view class="action-bar">
+      <button v-if="order.status === 'unpaid'" :disabled="cancelling" @click="pay">立即支付</button>
       <button v-if="order.status === 'unpaid'" :disabled="cancelling" @click="cancel">
         {{ cancelling ? '取消中…' : '取消订单' }}
       </button>

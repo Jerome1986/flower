@@ -35,12 +35,13 @@
 .home .custom-card { display: flex; align-items: center; gap: 20rpx; width: 100%; margin-top: 28rpx; padding: 30rpx 34rpx; border-radius: 12rpx; background: #fff; border: 1rpx solid #f0f0e8; box-shadow: 0 4rpx 10rpx rgba(48, 43, 25, 0.05); }
 .custom-card__copy { flex: 1; min-width: 0; .muted { margin-top: 8rpx; font-size: 22rpx; } }
 .home .round-action { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 96rpx; height: 96rpx; border-radius: 50%; background: #fffef5; border: 1rpx solid #dedfcd; font-size: 28rpx; font-weight: 500; text-align: center; }
+.home .round-action[disabled] { color: inherit; }
+.home .round-action::after { border: none; }
 .gift-card { display: flex; align-items: center; gap: 20rpx; margin-top: 28rpx; padding: 28rpx 34rpx; border-radius: 12rpx; background: $qs-card-activity-bg; }
 .gift-card__copy { flex: 1; min-width: 0; .entry-title { font-size: 27rpx; } }
 .gift-card__icon { font-size: 30rpx; line-height: 1.2; margin-bottom: 6rpx; }
 .home .invite-link { margin-top: 5rpx; color: #76776c; font-size: 22rpx; }
 .gift-status { margin-top: 8rpx; color: #827a54; font-size: 20rpx; line-height: 1.5; }
-.home .gift-action { box-shadow: 0 3rpx 9rpx rgba(48, 43, 25, 0.1); font-size: 26rpx; }
 .home .text-button { flex-shrink: 0; color: #796315; font-size: 23rpx; .iconfont { display: inline; margin-left: 8rpx; font-size: 22rpx; } }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin: 36rpx 0 20rpx; .muted { margin-top: 6rpx; } }
 .flower-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20rpx; }

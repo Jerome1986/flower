@@ -1,6 +1,30 @@
 @use '../product/product.scss';
 @use '../../uni.scss' as *;
 
+.product-page .specification {
+  margin: 12rpx 12rpx 0 0;
+  padding: 16rpx 24rpx;
+  border: none;
+  font-size: 26rpx;
+}
+.product-page .specification::after {
+  border: none;
+}
+.product-page .spec-unit {
+  font-size: 24rpx;
+}
+.product-page .specification.selected {
+  background: $qs-brandColor-light;
+  color: $qs-brandColor;
+}
+.product-page .title-row {
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.product-page .buy-button[disabled] {
+  opacity: 0.5;
+}
+
 // 复用普通商品详情布局，补充平台配送信息样式。
 .delivery-option {
   display: flex;

@@ -1,15 +1,37 @@
-import { pendingIntegration } from '@/utils/integration'
-import type { Bouquet, CustomSelection, CustomSubmission, CustomQuote } from '@/types/integration'
-import type { OrderResponse } from '@/types/order-api'
+import { request } from '@/utils/http'
+import type { BouquetResponse, BouquetSelection, BouquetSubmission } from '@/types/bouquet'
+import type { OrderQuote, OrderResponse } from '@/types/order-api'
+
+// 获取平台上架的成品花束。
 export const getBouquetsApi = () => {
-  return pendingIntegration<Bouquet[]>('成品花束')
+  return request<BouquetResponse[]>({
+    method: 'GET',
+    url: '/shop/bouquets',
+  })
 }
-export const getBouquetApi = (_id: string) => {
-  return pendingIntegration<Bouquet>('成品花束')
+
+// 获取成品花束详情与平台配送信息。
+export const getBouquetApi = (id: string) => {
+  return request<BouquetResponse>({
+    method: 'GET',
+    url: `/shop/bouquets/${encodeURIComponent(id)}`,
+  })
 }
-export const quoteCustomApi = (_selection: CustomSelection) => {
-  return pendingIntegration<CustomQuote>('花束下单')
+
+// 获取定制花束订单报价。
+export const quoteCustomApi = (data: BouquetSelection) => {
+  return request<OrderQuote>({
+    method: 'POST',
+    url: '/user/custom-orders/quote',
+    data,
+  })
 }
-export const submitCustomApi = (_input: CustomSubmission) => {
-  return pendingIntegration<OrderResponse>('花束下单')
+
+// 创建平台配送的定制订单。
+export const submitCustomApi = (data: BouquetSubmission) => {
+  return request<OrderResponse>({
+    method: 'POST',
+    url: '/user/custom-orders',
+    data,
+  })
 }

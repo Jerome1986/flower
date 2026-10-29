@@ -109,7 +109,7 @@ export const request = <T>(options: RequestOptions) => {
             userStore.clearProfile()
             uni.navigateTo({
               url:
-                '/pages/test-login/index' +
+                '/pages/login/index' +
                 (returnUrl ? '?returnUrl=' + encodeURIComponent(returnUrl) : ''),
             })
           }

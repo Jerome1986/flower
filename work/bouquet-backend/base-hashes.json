@@ -1,0 +1,10 @@
+{
+  "prisma/schema.prisma": "b299af6b71b4a4807a7f3b4bebfda44dd3954367f840ae9514cd8b41acfcd823",
+  "src/app.module.ts": "286dae0d484a8cb83faabd20c42365de948ba802bfa87fcd9089768e4dafec0a",
+  "src/product/product.dto.ts": "310275ee3a45d7f32f66ba099ac06bc0072f08b0df505b70af7b605a518c59db",
+  "src/product/product.service.ts": "97591775333f9cca7eb9c4178f6a75d2f28a7651bb7c55fdb12b82751d2fcc33",
+  "src/shop/shop.module.ts": "f6590719a356f89f0b5d46235945f008eb557fd258d69635edde01c27ee6964e",
+  "src/store-product/store-product.service.ts": "0665cad2f63554434af134fd2b797656136806238d37c9ee27b9717e283cff82",
+  "src/orders/orders.service.ts": "ea1e13e96f118d60e96b74956577d2952afabf3364d14ffc631df7c3128ab1f2",
+  "src/orders/orders.module.ts": "8aa884380195f7e9b2532844418bdd5e37f3aed7fa956b3f9d19afe6cbf26b6f"
+}

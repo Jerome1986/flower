@@ -1,0 +1,51 @@
+@use '../checkout/checkout.scss';
+@use '../../uni.scss' as *;
+
+.summary-image {
+  width: 132rpx;
+  height: 132rpx;
+  float: left;
+  margin-right: 24rpx;
+  border-radius: 16rpx;
+}
+.panel {
+  overflow: hidden;
+}
+.checkout-total,
+.total-label {
+  display: block;
+}
+.checkout-total {
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $qs-brandColor;
+}
+.total-label {
+  font-size: 22rpx;
+  color: $qs-font-dec;
+}
+.checkout-page .submit-button {
+  width: auto;
+  min-width: 260rpx;
+  flex-shrink: 0;
+  font-size: 25rpx;
+}
+.checkout-page .remark-input {
+  box-sizing: border-box;
+  padding: 20rpx;
+  background: $qs-input-bg;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+}
+.checkout-page button[disabled] {
+  opacity: 0.5;
+}
+.checkout-page .panel > button {
+  margin-top: 20rpx;
+  padding: 16rpx 24rpx;
+  color: $qs-brandColor;
+  background: $qs-brandColor-light;
+  border-radius: 16rpx;
+  font-size: 25rpx;
+}

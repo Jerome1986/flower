@@ -1,15 +1,23 @@
 import { pendingIntegration } from '@/utils/integration'
-import type { CouponWallet, InvitationSummary, NewcomerGift } from '@/types/integration'
+import { request } from '@/utils/http'
+import type { InvitationSummary, NewcomerGift } from '@/types/integration'
 import type { OrderSelection, OrderSubmission, OrderQuote, OrderResponse } from '@/types/order-api'
 import type { Coupon } from '@/types/coupon'
-export const getWalletApi = () => {
-  return pendingIntegration<CouponWallet>('花礼券')
-}
+// 查询当前登录用户的新人资格和已领取花礼券。
 export const getNewcomerGiftApi = () => {
-  return pendingIntegration<NewcomerGift>('新人花礼')
+  // 1. 用户身份由请求工具自动携带的登录令牌确定。
+  return request<NewcomerGift>({
+    method: 'GET',
+    url: '/marketing-activities/new-user-gift/status',
+  })
 }
+// 主动领取新人花礼，由后端重新校验资格并防止重复发券。
 export const claimNewcomerGiftApi = () => {
-  return pendingIntegration<NewcomerGift>('新人花礼')
+  // 1. 不传用户或资格信息，使用服务端的最新校验结果。
+  return request<NewcomerGift>({
+    method: 'POST',
+    url: '/marketing-activities/new-user-gift/claim',
+  })
 }
 export const getAvailableCouponsApi = (_selection: OrderSelection) => {
   return pendingIntegration<Coupon[]>('订单优惠券')

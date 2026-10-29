@@ -59,7 +59,7 @@ watch(
 function login() {
   uni.navigateTo({
     url:
-      '/pages/test-login/index?returnUrl=' +
+      '/pages/login/index?returnUrl=' +
       encodeURIComponent('/pages/addresses/index' + (selectionMode.value ? '?select=1' : '')),
   })
 }

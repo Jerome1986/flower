@@ -5,7 +5,7 @@ const ts = require('typescript')
 const vue = require('vue')
 const assert = require('assert/strict')
 const root = path.resolve(__dirname, '..')
-function createHarness(overrides = {}) {
+function createHarness(overrides = {}, env = {}) {
   const storage = new Map(),
     cache = new Map(),
     calls = [],
@@ -75,6 +75,7 @@ function createHarness(overrides = {}) {
     if (!page && cache.has(file)) return cache.get(file)
     if (file.endsWith('.json')) return JSON.parse(fs.readFileSync(file, 'utf8'))
     let code = fs.readFileSync(file, 'utf8')
+    code = code.replace(/import\.meta\.env\.DEV\b/g, JSON.stringify(env.DEV ?? false))
     if (file.endsWith(path.join('utils', 'http.ts')))
       code = code.replace(
         'import.meta.env.VITE_API_BASE_URL',

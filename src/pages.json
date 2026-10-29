@@ -73,14 +73,38 @@
 			"style": { "navigationBarTitleText": "门店销售" }
 		},
 		{
-			"path": "pages/test-login/index",
-			"style": { "navigationBarTitleText": "测试登录" }
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationBarBackgroundColor": "#fcfaf4",
+				"backgroundColor": "#fcfaf4"
+			}
+		},
+		{
+			"path": "pages/agreement/terms",
+			"style": {
+				"navigationBarTitleText": "服务条款",
+				"navigationBarBackgroundColor": "#fcfaf4",
+				"backgroundColor": "#fcfaf4"
+			}
+		},
+		{
+			"path": "pages/agreement/privacy",
+			"style": {
+				"navigationBarTitleText": "隐私协议",
+				"navigationBarBackgroundColor": "#fcfaf4",
+				"backgroundColor": "#fcfaf4"
+			}
 		},
 		{
 			"path": "pages/my/index",
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
+		},
+		{
+			"path": "pages/profile/index",
+			"style": { "navigationBarTitleText": "编辑资料" }
 		}
 	],
 	"tabBar": {
