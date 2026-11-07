@@ -6,6 +6,8 @@ const vue = require('vue')
 const assert = require('assert/strict')
 const root = path.resolve(__dirname, '..')
 function createHarness(overrides = {}, env = {}) {
+  const pinia = require('pinia')
+  const testPinia = pinia.createPinia()
   const storage = new Map(),
     cache = new Map(),
     calls = [],
@@ -78,7 +80,7 @@ function createHarness(overrides = {}, env = {}) {
     code = code.replace(/import\.meta\.env\.DEV\b/g, JSON.stringify(env.DEV ?? false))
     if (file.endsWith(path.join('utils', 'http.ts')))
       code = code.replace(
-        'import.meta.env.VITE_API_BASE_URL',
+        /import\.meta\.env\.VITE_API_BASE_URL\b/g,
         JSON.stringify('http://localhost:3000/api'),
       )
     if (page) {
@@ -97,6 +99,10 @@ function createHarness(overrides = {}, env = {}) {
     const requireLocal = (name) => {
       if (name in overrides) return overrides[name]
       if (name === 'vue') return vue
+      if (name === 'pinia') return { defineStore: (...args) => {
+        const useStore = pinia.defineStore(...args)
+        return () => useStore(testPinia)
+      } }
       if (name === '@dcloudio/uni-app') return hooksApi
       if (name === '@/stores/modules/user' || name === '@/stores')
         return { useUserStore: () => account }
@@ -133,8 +139,9 @@ function createHarness(overrides = {}, env = {}) {
         uni,
         console,
         Date,
-        setInterval: () => 1,
-        clearInterval() {},
+        Error,
+        setInterval: env.setInterval || (() => 1),
+        clearInterval: env.clearInterval || (() => {}),
         setTimeout,
         clearTimeout,
         getCurrentPages: () => [
@@ -190,6 +197,7 @@ function createHarness(overrides = {}, env = {}) {
     module: (name) => load(path.join(root, 'src', name)),
     close() {
       scopes.forEach((s) => s.stop())
+      testPinia._e.stop()
     },
   }
 }

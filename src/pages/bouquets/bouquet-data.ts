@@ -1,31 +1,34 @@
-import { getBouquetsApi, getBouquetApi } from '@/api/bouquets'
-import { resolveApiImage } from '@/utils/http'
+import { getBouquetApi, getBouquetsApi } from '@/api/bouquets'
 import type { Bouquet, BouquetResponse } from '@/types/bouquet'
-
-function mapBouquet(item: BouquetResponse): Bouquet {
+import { resolveApiImage } from '@/utils/http'
+const mapBouquet = (item: BouquetResponse): Bouquet => {
   const specs = item.specs.map((spec) => ({
     ...spec,
     id: String(spec.id),
     price: spec.price / 100,
   }))
+  const first = specs.reduce<(typeof specs)[number] | undefined>(
+    (best, spec) => (!best || spec.price < best.price ? spec : best),
+    undefined,
+  )
   return {
     ...item,
     id: String(item.id),
     image: resolveApiImage(item.coverImage),
     images: item.images.map(resolveApiImage).filter(Boolean),
-    price: specs.length ? Math.min(...specs.map((spec) => spec.price)) : 0,
-    specification: specs[0]?.name ?? '',
-    unit: specs[0]?.unit ?? '',
+    price: first?.price ?? 0,
+    specification: first?.name ?? '',
+    unit: first?.unit ?? '',
     deliveryFee: item.deliveryFee / 100,
     methods: ['delivery'],
     specs,
   }
 }
-export async function getBouquets() {
+export const getBouquets = async () => {
   const { data } = await getBouquetsApi()
   return data.map(mapBouquet)
 }
-export async function getBouquet(id: string) {
+export const getBouquet = async (id: string) => {
   const { data } = await getBouquetApi(id)
   return mapBouquet(data)
 }

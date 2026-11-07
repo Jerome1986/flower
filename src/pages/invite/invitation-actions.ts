@@ -1,13 +1,7 @@
-import * as api from '@/api/marketing'
-// 绑定时机及首次注册协议确认后启用。
-export const invitationBindingEnabled = false
-export function rememberInvitation(code?: string) {
-  if (code && !uni.getStorageSync('flower-pending-invite-code'))
+// 首次分享来源交给微信注册接口绑定，不为已注册用户补绑。
+export const rememberInvitation = (code?: string) => {
+  if (!code || !/^[a-zA-Z0-9_-]{1,32}$/.test(code)) return
+  if (!uni.getStorageSync('flower-pending-invite-code')) {
     uni.setStorageSync('flower-pending-invite-code', code)
-}
-export async function bindPendingInvitation() {
-  const code = uni.getStorageSync('flower-pending-invite-code')
-  if (!code) return
-  await api.bindInvitationApi(String(code))
-  uni.removeStorageSync('flower-pending-invite-code')
+  }
 }

@@ -1,354 +1,216 @@
-@use '../../uni.scss' as *;
+﻿@use '../../uni.scss' as *;
 
-// 测试登录入口固定在底部导航上方。
-.my-page .test-login-float {
-  position: fixed;
-  right: 24rpx;
-  bottom: calc(var(--window-bottom, 0px) + 30rpx + env(safe-area-inset-bottom));
-  z-index: 20;
-  padding: 18rpx 26rpx;
-  border-radius: 40rpx;
-  background: $qs-brandColor;
-  color: $qs-font-inverse;
-  font-size: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(238, 210, 97, 0.2);
-}
-.test-role-label {
-  display: block;
-  margin-top: 8rpx;
-  color: $qs-brandColor;
-  font-size: 21rpx;
-}
-
-// 与首页统一的间距、色彩和按钮基础样式。
 .my-page {
-  padding: 24rpx $qs-page-spacing 32rpx;
-  color: $qs-font-body;
-  text {
-    display: block;
-  }
+  min-height: 100vh;
+  padding: 24rpx $qs-page-spacing 48rpx;
+  background: #fffefa;
+  color: #171814;
+
+  text { display: block; }
+
   button {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
     border-radius: 0;
     background: transparent;
     color: inherit;
+    font-family: inherit;
     font-size: inherit;
     line-height: 1.5;
     text-align: left;
   }
 }
-.muted {
-  color: $qs-font-dec;
-  font-size: 22rpx;
-  line-height: 1.7;
-}
-.eyebrow {
-  color: $qs-brandColor;
-  font-size: 21rpx;
-  letter-spacing: 2rpx;
-}
-.section-title {
-  color: $qs-font-title;
-  font-size: 32rpx;
-  font-weight: 600;
-}
-.entry-title {
-  color: $qs-font-title;
-  font-size: 27rpx;
-  font-weight: 500;
-}
-.chevron {
-  color: $qs-font-dec2;
-  font-size: 28rpx;
-}
+
+.muted { color: #76776c; font-size: 24rpx; line-height: 1.6; }
+.eyebrow { color: #796315; font-size: 24rpx; line-height: 1.5; }
+.section-title { font-size: 34rpx; font-weight: 600; line-height: 1.4; }
+.entry-title { font-size: 28rpx; font-weight: 500; line-height: 1.5; }
+.chevron { flex-shrink: 0; color: #76776c; font-size: 24rpx; }
+
 .my-page .text-button {
-  color: $qs-font-dec;
-  font-size: 22rpx;
-}
-.text-button .iconfont,
-.invite-link .iconfont {
-  display: inline;
-  margin-left: 8rpx;
-  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 72rpx;
+  color: #796315;
+  font-size: 24rpx;
 }
 
-// 账户区域不展示尚未接入的券数和订单数。
+.text-button .iconfont, .invite-link .iconfont {
+  display: inline;
+  margin-left: 8rpx;
+  font-size: 24rpx;
+}
+
+// 头像、账户信息和资料入口横向对齐，昵称与手机号保持紧密分组。
 .profile-section {
-  padding: 30rpx 24rpx 0;
+  padding: 32rpx;
+  border: 1rpx solid #eee4be;
   border-radius: 24rpx;
   background: $qs-brandColor-light;
 }
+
 .profile-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 112rpx minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18rpx;
-  margin-top: 28rpx;
+  gap: 16rpx;
+  margin-top: 32rpx;
 }
-.profile-section {
-  padding-bottom: 24rpx;
-}
-.sales-summary {
-  display: flex;
-  gap: 12rpx;
-  margin-top: 28rpx;
-}
-.sales-summary > view {
-  flex: 1;
-  min-width: 0;
-}
-.sales-value {
-  color: $qs-brandColor;
-  font-size: 34rpx;
-  font-weight: 600;
-  margin-bottom: 6rpx;
-}
-.gift-note {
-  margin-top: 22rpx;
-  padding-top: 18rpx;
-  border-top: 1rpx solid $qs-divider;
-}
+
 .my-page .avatar {
   display: flex;
-  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 96rpx;
-  height: 96rpx;
-  border: 4rpx solid $qs-card-bg;
-  border-radius: 50%;
-  background: $qs-card-bg;
-  color: $qs-brandColor;
-  .iconfont {
-    font-size: 64rpx;
-    line-height: 1;
-  }
-}
-.profile-copy {
-  flex: 1;
-  min-width: 0;
-}
-.profile-name {
+  width: 112rpx;
+  height: 112rpx;
   overflow: hidden;
-  color: $qs-font-title;
-  font-size: 32rpx;
-  font-weight: 600;
-  text-overflow: ellipsis;
+  border: 6rpx solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  color: #796315;
+
+  .iconfont { font-size: 64rpx; line-height: 1; }
+}
+
+.my-page .profile-copy { min-width: 0; width: 100%; }
+.profile-name { overflow: hidden; font-size: 34rpx; font-weight: 600; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.profile-copy .muted { margin-top: 8rpx; font-size: 24rpx; }
+
+.my-page .login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
+  padding: 12rpx 16rpx;
+  border: 1rpx solid #dedfcd;
+  border-radius: 16rpx;
+  background: #fff;
+  color: #796315;
+  font-size: 24rpx;
+  font-weight: 500;
   white-space: nowrap;
 }
-.profile-copy .muted {
-  margin-top: 8rpx;
-  font-size: 20rpx;
-}
-.my-page .login-button {
-  flex-shrink: 0;
-  padding: 12rpx 18rpx;
-  border-radius: 30rpx;
-  background: $qs-brandColor;
-  color: $qs-font-inverse;
-  font-size: 21rpx;
-}
+
 .account-entries {
   display: flex;
   margin-top: 32rpx;
-  padding: 24rpx 0 28rpx;
-  border-top: 1rpx solid $qs-border;
-}
-.account-entries button {
-  flex: 1;
-  text-align: center;
-}
-.account-entries button:first-child {
-  border-right: 1rpx solid $qs-border;
-}
-.account-icon {
-  display: flex;
-  height: 56rpx;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10rpx;
-  color: $qs-brandColor;
-}
-.account-icon .iconfont {
-  font-size: 48rpx;
-  line-height: 1;
-}
-.account-entries .muted {
-  margin-top: 5rpx;
-  font-size: 20rpx;
+  padding: 24rpx 0;
+  border: 1rpx solid #f0f0e8;
+  border-radius: 20rpx;
+  background: #fff;
 }
 
-// 订单入口与服务列表。
-.panel {
-  margin-top: 24rpx;
-  padding: 28rpx 24rpx;
-  border: 1rpx solid $qs-divider;
-  border-radius: 24rpx;
-  background: $qs-card-bg;
-}
-.panel-heading {
+.my-page .account-entries button { flex: 1; min-width: 0; padding: 0 12rpx; text-align: center; }
+.account-entries button:first-child { border-right: 1rpx solid #f0f0e8; }
+.account-icon { display: flex; align-items: center; justify-content: center; height: 64rpx; margin-bottom: 8rpx; color: #796315; }
+.account-icon .iconfont { font-size: 48rpx; line-height: 1; }
+.account-entries .muted { margin-top: 8rpx; font-size: 22rpx; }
+
+// 订单与服务入口使用统一卡片边界，减少次要元素对阅读的干扰。
+.panel { margin-top: 24rpx; padding: 24rpx 32rpx 32rpx; border: 1rpx solid #f0f0e8; border-radius: 24rpx; background: #fff; }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; min-height: 72rpx; }
+.panel-heading > .muted { flex: 1; min-width: 0; text-align: right; overflow-wrap: break-word; }
+.panel-heading .section-title { flex-shrink: 0; }
+.order-entries { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8rpx; margin: 24rpx -16rpx; }
+
+.my-page .order-entries button {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-.order-entries {
-  display: flex;
-  margin: 32rpx -12rpx 28rpx;
-}
-.order-entries button {
-  display: flex;
-  flex: 1;
+  min-width: 0;
   flex-direction: column;
   align-items: center;
-  gap: 14rpx;
+  gap: 16rpx;
+  padding: 8rpx 0;
+  font-size: 22rpx;
   text-align: center;
-  font-size: 21rpx;
+
+  > text { display: flex; align-items: flex-start; justify-content: center; min-height: 64rpx; width: 100%; line-height: 1.5; }
 }
-.order-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  padding-top: 22rpx;
-  border-top: 1rpx solid $qs-divider;
-  color: $qs-font-dec;
-  font-size: 21rpx;
-}
-.order-note .iconfont {
-  color: $qs-brandColor;
-  font-size: 28rpx;
-}
-.services-panel {
-  padding-bottom: 4rpx;
-}
-.services-panel .panel-heading {
-  margin-bottom: 10rpx;
-}
+
+.order-note { display: flex; align-items: center; gap: 12rpx; padding-top: 24rpx; border-top: 1rpx solid #f0f0e8; color: #76776c; font-size: 22rpx; line-height: 1.6; }
+.order-note .iconfont { flex-shrink: 0; color: #796315; font-size: 28rpx; }
+.services-panel { padding-bottom: 8rpx; }
+.services-panel .panel-heading { margin-bottom: 8rpx; }
+
 .my-page .service-row {
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 24rpx;
   width: 100%;
+  min-height: 136rpx;
   padding: 24rpx 0;
-  border-bottom: 1rpx solid $qs-divider;
-}
-.service-row:last-child {
-  border-bottom: 0;
-}
-.service-icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 68rpx;
-  height: 68rpx;
-  border-radius: 18rpx;
-  background: $qs-brandColor-light;
-}
-.service-copy {
-  flex: 1;
-  min-width: 0;
-}
-.service-copy .muted {
-  margin-top: 4rpx;
-  font-size: 21rpx;
+  border-bottom: 1rpx solid #f0f0e8;
 }
 
-// 邀请活动延续首页的花礼文案与浅绿色视觉。
+.service-row:last-child { border-bottom: 0; }
+.service-icon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 64rpx; height: 64rpx; border-radius: 16rpx; background: $qs-brandColor-light; }
+.service-copy { flex: 1; min-width: 0; }
+.service-copy .muted { margin-top: 8rpx; font-size: 22rpx; }
+
+// 邀请活动保留品牌浅黄底色，礼盒作为轻量视觉重点。
 .my-page .invite-card {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 24rpx;
   width: 100%;
   margin-top: 24rpx;
-  padding: 28rpx;
-  overflow: hidden;
-  border: 1rpx solid $qs-border;
+  padding: 32rpx;
+  border: 1rpx solid #eee4be;
   border-radius: 24rpx;
   background: $qs-card-activity-bg;
 }
-.invite-copy {
-  flex: 1;
-  min-width: 0;
-}
-.invite-title {
-  margin: 12rpx 0 8rpx;
-  color: $qs-font-title;
-  font-size: 34rpx;
-  font-weight: 600;
-}
-.invite-link {
-  margin-top: 20rpx;
-  color: $qs-brandColor;
-  font-size: 23rpx;
-  font-weight: 500;
-}
-.invite-art {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 120rpx;
-  height: 120rpx;
-  border: 1rpx solid $qs-border;
-  border-radius: 50%;
-  background: $qs-card-bg;
-  color: $qs-brandColor;
-}
-.invite-art .iconfont {
-  font-size: 78rpx;
-  line-height: 1;
-}
+
+.invite-copy { flex: 1; min-width: 0; }
+.invite-copy .eyebrow { font-size: 22rpx; }
+.invite-title { margin: 12rpx 0 8rpx; font-size: 36rpx; font-weight: 600; line-height: 1.4; }
+.invite-link { margin-top: 24rpx; color: #796315; font-size: 24rpx; font-weight: 500; line-height: 1.5; }
+.invite-art { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 112rpx; height: 112rpx; color: #796315; }
+.invite-art .iconfont { font-size: 88rpx; line-height: 1; }
+
 .my-page .daily-card {
   display: flex;
   align-items: center;
   gap: 24rpx;
   width: 100%;
   margin-top: 24rpx;
-  padding: 20rpx;
-  border: 1rpx solid $qs-divider;
+  padding: 24rpx;
+  border: 1rpx solid #f0f0e8;
   border-radius: 24rpx;
-  background: $qs-card-bg;
+  background: #fff;
 }
-.daily-card image {
-  flex-shrink: 0;
-  width: 132rpx;
-  height: 154rpx;
-  border-radius: 16rpx;
-}
-.daily-copy {
-  flex: 1;
-  min-width: 0;
-}
-.daily-copy .muted {
-  margin-top: 8rpx;
-  font-size: 21rpx;
-}
-.my-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-  margin-top: 40rpx;
-  color: $qs-font-dec2;
-  font-size: 23rpx;
-  letter-spacing: 3rpx;
-}
-.my-footer .muted {
-  font-size: 20rpx;
-  letter-spacing: 0;
-}
-// 店长管理入口放在账户区下方，明确区别于用户订单。
-.my-page .manager-entry {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  width: 100%;
-  margin-top: 22rpx;
-  padding: 22rpx;
-  border-radius: 20rpx;
-  background: $qs-brandColor-light;
-  color: $qs-brandColor;
-  font-size: 28rpx;
+
+.daily-card image { flex-shrink: 0; width: 152rpx; height: 184rpx; border-radius: 12rpx; }
+.daily-copy { flex: 1; min-width: 0; }
+.daily-copy .muted { margin-top: 8rpx; font-size: 22rpx; }
+.my-footer { display: flex; flex-direction: column; align-items: center; gap: 12rpx; margin-top: 48rpx; padding: 24rpx 0; color: #76776c; font-size: 24rpx; }
+.my-footer .muted { font-size: 22rpx; text-align: center; }
+
+// 店长入口和销售统计沿用相同的阅读层级，金额使用深金色确保对比度。
+.my-page .manager-entry { display: flex; align-items: center; gap: 24rpx; width: 100%; margin-top: 16rpx; padding: 24rpx; border: 1rpx solid #eee4be; border-radius: 16rpx; background: $qs-brandColor-light; }
+.manager-entry .service-icon { background: #fff; }
+.sales-summary { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 16rpx; margin: 24rpx 0; padding: 24rpx 0; border-top: 1rpx solid #f0f0e8; border-bottom: 1rpx solid #f0f0e8; }
+.sales-summary > view { min-width: 0; }
+.sales-summary > view + view { padding-left: 16rpx; border-left: 1rpx solid #f0f0e8; }
+.sales-value { margin-bottom: 8rpx; color: #796315; font-size: 36rpx; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
+.sales-summary .muted { font-size: 22rpx; }
+.gift-note { margin-top: 24rpx; padding-top: 24rpx; border-top: 1rpx solid #f0f0e8; }
+.my-page .panel > button:not(.manager-entry):not(.service-row) { display: flex; align-items: center; justify-content: center; min-height: 72rpx; color: #796315; font-size: 24rpx; }
+
+// 保留现有测试入口的备用样式。
+.my-page .test-login-float { position: fixed; right: 24rpx; bottom: calc(var(--window-bottom, 0px) + 32rpx + env(safe-area-inset-bottom)); z-index: 20; padding: 16rpx 24rpx; border-radius: 16rpx; background: $qs-brandColor; color: $qs-font-inverse; font-size: 24rpx; }
+.test-role-label { display: block; margin-top: 8rpx; color: #796315; font-size: 22rpx; }
+
+@media (max-width: 350px) {
+  .profile-section, .panel, .my-page .invite-card { padding-right: 24rpx; padding-left: 24rpx; }
+  .profile-row { grid-template-columns: 96rpx minmax(0, 1fr) auto; gap: 12rpx; }
+  .my-page .avatar { width: 96rpx; height: 96rpx; }
+  .profile-name { font-size: 32rpx; }
+  .my-page .login-button { padding-right: 12rpx; padding-left: 12rpx; font-size: 22rpx; }
+  .my-page .account-entries button { padding: 0 8rpx; }
+  .account-entries .muted { font-size: 20rpx; }
+  .order-entries { margin-right: -8rpx; margin-left: -8rpx; }
+  .my-page .service-row, .my-page .manager-entry { gap: 16rpx; }
+  .my-page .daily-card { gap: 16rpx; }
+  .daily-card image { width: 128rpx; height: 176rpx; }
 }

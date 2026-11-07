@@ -1,5 +1,8 @@
 {
   "files.associations": {
     "manifest.json": "jsonc"
-  }
+  },
+  "workbench.experimental.modernUI": true,
+  "workbench.modernUIFrostedGlass": true,
+  "workbench.modernUIFrostedGlassOpacity": 60
 }

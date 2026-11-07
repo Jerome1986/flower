@@ -1,8 +1,14 @@
 @use '../../uni.scss' as *;
+.page-intro {
+  padding: 32rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
 
 // 店长订单管理沿用项目主题与订单卡片风格。
 .manager-page {
-  padding: 28rpx $qs-page-spacing calc(32rpx + env(safe-area-inset-bottom));
+  padding: 32rpx $qs-page-spacing calc(32rpx + env(safe-area-inset-bottom));
   color: $qs-font-body;
   button {
     margin: 0;
@@ -15,9 +21,9 @@
 }
 .eyebrow {
   display: block;
-  font-size: 21rpx;
-  letter-spacing: 2rpx;
-  color: $qs-brandColor;
+  font-size: 22rpx;
+  letter-spacing: 0;
+  color: $qs-accent-text;
 }
 .page-title {
   display: block;
@@ -27,23 +33,23 @@
   color: $qs-font-title;
 }
 .store-summary {
-  margin-top: 22rpx;
+  margin-top: 24rpx;
   padding: 24rpx;
   border-radius: 20rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
-  font-size: 27rpx;
+  color: $qs-accent-text;
+  font-size: 28rpx;
 }
 .hint {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   color: $qs-font-dec;
   font-size: 22rpx;
   line-height: 1.8;
   overflow-wrap: anywhere;
 }
 .tabs {
-  margin: 26rpx 0;
+  margin: 24rpx 0;
   white-space: nowrap;
 }
 .tabs-row {
@@ -51,10 +57,10 @@
   gap: 12rpx;
   button {
     flex: none;
-    padding: 14rpx 22rpx;
-    border-radius: 30rpx;
+    padding: 16rpx 24rpx;
+    border-radius: 16rpx;
     background: $qs-card-bg;
-    font-size: 23rpx;
+    font-size: 24rpx;
     &.active {
       background: $qs-brandColor;
       color: $qs-font-inverse;
@@ -62,8 +68,8 @@
   }
 }
 .order-card {
-  padding: 28rpx;
-  margin-top: 20rpx;
+  padding: 32rpx;
+  margin-top: 24rpx;
   border: 1rpx solid $qs-divider;
   border-radius: 24rpx;
   background: $qs-card-bg;
@@ -73,7 +79,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 .section-title {
   font-size: 28rpx;
@@ -81,14 +87,15 @@
   color: $qs-font-title;
 }
 .status-label {
-  color: $qs-brandColor;
-  font-size: 23rpx;
+  color: $qs-accent-text;
+  font-size: 24rpx;
+  flex-shrink: 0;
 }
 .product-row {
   display: flex;
-  gap: 20rpx;
+  gap: 24rpx;
   margin: 24rpx 0;
-  font-size: 25rpx;
+  font-size: 26rpx;
   image {
     flex: none;
     width: 130rpx;
@@ -97,28 +104,28 @@
   }
 }
 .contact-info {
-  font-size: 25rpx;
+  font-size: 26rpx;
 }
 .pickup-code {
   display: block;
   margin-top: 16rpx;
-  font-size: 25rpx;
-  color: $qs-brandColor;
+  font-size: 26rpx;
+  color: $qs-accent-text;
 }
 .actions {
   justify-content: flex-end;
   margin-top: 24rpx;
-  padding-top: 22rpx;
+  padding-top: 24rpx;
   border-top: 1rpx solid $qs-divider;
   button {
-    padding: 14rpx 24rpx;
-    border-radius: 30rpx;
-    font-size: 23rpx;
+    padding: 16rpx 24rpx;
+    border-radius: 16rpx;
+    font-size: 24rpx;
   }
 }
 .manager-page .contact-button {
   border: 1rpx solid $qs-border;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
 }
 .manager-page .action-button {
   background: $qs-brandColor;
@@ -128,27 +135,34 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20rpx;
+  gap: 24rpx;
   padding: 80rpx 24rpx;
   text-align: center;
   color: $qs-font-dec;
   font-size: 26rpx;
   .iconfont {
-    color: $qs-brandColor;
+    color: $qs-accent-text;
     font-size: 56rpx;
   }
   button {
-    color: $qs-brandColor;
+    color: $qs-accent-text;
   }
 }
 .demo-note {
   display: block;
-  margin-top: 30rpx;
+  margin-top: 32rpx;
   text-align: center;
   color: $qs-font-dec2;
-  font-size: 21rpx;
+  font-size: 22rpx;
 }
 .actions {
   flex-wrap: wrap;
   gap: 12rpx;
+}
+
+.actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
 }

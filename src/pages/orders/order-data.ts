@@ -1,9 +1,22 @@
-import { submitOrderApi, getOrdersApi, getOrderApi, cancelOrderApi } from '@/api/orders'
-import { resolveApiImage } from '@/utils/http'
+import { cancelOrderApi, getOrderApi, getOrdersApi, submitOrderApi } from '@/api/orders'
 import type { PreviewOrder } from '@/types/order'
 import type { OrderResponse, OrderSubmission } from '@/types/order-api'
-
-export function mapOrder(order: OrderResponse): PreviewOrder {
+import { resolveApiImage } from '@/utils/http'
+export const mapOrder = (order: OrderResponse): PreviewOrder => {
+  const items = (order.items?.length ? order.items : order.item ? [order.item] : []).map(
+    (item) => ({
+      productName: item.productName,
+      image: resolveApiImage(item.coverImage),
+      specification: item.specName,
+      unit: item.unit,
+      quantity: item.quantity,
+      remark: 'remark' in item ? String(item.remark || '') : '',
+      unitPrice:
+        'unitPrice' in item && typeof item.unitPrice === 'number'
+          ? item.unitPrice / 100
+          : undefined,
+    }),
+  )
   const status: Record<string, PreviewOrder['status']> = {
     PENDING_PAYMENT: 'unpaid',
     PENDING_ACCEPTANCE: 'pending',
@@ -13,10 +26,13 @@ export function mapOrder(order: OrderResponse): PreviewOrder {
     DISPATCHED: 'preparing',
     DELIVERING: 'delivering',
     COMPLETED: 'completed',
+    CANCELLING: 'cancelling',
     CANCELLED: 'cancelled',
     CLOSED: 'cancelled',
   }
   return {
+    items,
+    expiresAt: order.expiresAt,
     version: order.version,
     logs: order.logs,
     orderNo: order.orderNo,
@@ -27,12 +43,12 @@ export function mapOrder(order: OrderResponse): PreviewOrder {
     status: status[order.status] ?? 'pending',
     backendStatus: order.status,
     paymentStatus: order.paymentStatus,
-    productName: order.item?.productName ?? '',
-    image: resolveApiImage(order.item?.coverImage ?? ''),
-    specification: order.item?.specName ?? '',
-    unit: order.item?.unit ?? '',
-    quantity: order.item?.quantity ?? 0,
-    storeName: order.storeSnapshot?.name ?? '',
+    productName: items.map((item) => item.productName).join('、'),
+    image: items[0]?.image ?? '',
+    specification: items[0]?.specification ?? '',
+    unit: items[0]?.unit ?? '',
+    quantity: items.reduce((sum, item) => sum + item.quantity, 0),
+    storeName: order.storeSnapshot?.name || (order.type === 'CUSTOM' ? '平台定制' : ''),
     storeAddress: order.storeSnapshot?.address ?? '',
     storePhone: order.storeSnapshot?.phone ?? order.serviceSnapshot?.servicePhone ?? '',
     hours: order.storeSnapshot?.hours ?? order.serviceSnapshot?.businessHours ?? '',
@@ -45,22 +61,25 @@ export function mapOrder(order: OrderResponse): PreviewOrder {
     discount: order.discountAmount / 100,
     deliveryFee: order.deliveryFee / 100,
     createdAt: order.createdAt,
-    pickupCode: order.pickupCode ?? undefined,
+    pickupCode:
+      order.method === 'PICKUP' && order.status === 'READY'
+        ? order.pickupCode ?? undefined
+        : undefined,
   }
 }
-export async function submitOrder(data: OrderSubmission) {
+export const submitOrder = async (data: OrderSubmission) => {
   const response = await submitOrderApi(data)
   return mapOrder(response.data)
 }
-export async function getOrders() {
+export const getOrders = async () => {
   const { data } = await getOrdersApi()
   return data.map(mapOrder)
 }
-export async function getOrder(orderNo: string) {
+export const getOrder = async (orderNo: string) => {
   const { data } = await getOrderApi(orderNo)
   return mapOrder(data)
 }
-export async function cancelOrder(orderNo: string) {
+export const cancelOrder = async (orderNo: string) => {
   const { data } = await cancelOrderApi(orderNo)
   return mapOrder(data)
 }

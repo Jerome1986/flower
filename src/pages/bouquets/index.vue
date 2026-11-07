@@ -1,25 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { getBouquets } from './bouquet-data'
 import { useResource } from '@/composables/use-resource'
-
+import { onShow } from '@dcloudio/uni-app'
+import { computed } from 'vue'
+import { getBouquets } from './bouquet-data'
 // 专区数据来自独立花束服务。
 const resource = useResource(getBouquets, false)
 const bouquets = computed(() => resource.data.value || [])
 const loading = resource.loading
 const message = resource.message
 const pending = resource.pending
-onShow(resource.load)
-
 // 统一展示花束价格。
-function formatPrice(amount: number) {
+const formatPrice = (amount: number) => {
   return amount.toFixed(2)
 }
 // 打开所选成品花束的详情页面。
-function viewBouquet(id: string) {
+const viewBouquet = (id: string) => {
   uni.navigateTo({ url: `/pages/bouquet-detail/index?id=${id}` })
 }
+onShow(resource.load)
 </script>
 
 <template>
@@ -33,12 +31,8 @@ function viewBouquet(id: string) {
       <view class="flow-step is-current">
         <text class="step-number">01</text><text>选花束</text>
       </view>
-      <view class="flow-step">
-        <text class="step-number">02</text><text>填地址</text>
-      </view>
-      <view class="flow-step">
-        <text class="step-number">03</text><text>确认下单</text>
-      </view>
+      <view class="flow-step"> <text class="step-number">02</text><text>填地址</text> </view>
+      <view class="flow-step"> <text class="step-number">03</text><text>确认下单</text> </view>
     </view>
     <view class="service-note">
       <view class="service-icon"><text class="iconfont icon-liwuhe" /></view>
@@ -47,12 +41,18 @@ function viewBouquet(id: string) {
         <text class="service-copy">无需选择门店，为重要的时刻送上心意</text>
       </view>
     </view>
-    <view v-if="loading || message" class="tips-panel"><text>{{ loading ? '正在加载花束…' : message }}</text><button
-        v-if="!loading && !pending" @click="resource.load">重试</button></view>
+    <view v-if="loading || message" class="tips-panel"
+      ><text>{{ loading ? '正在加载花束…' : message }}</text
+      ><button v-if="!loading && !pending" @click="resource.load">重试</button></view
+    >
     <view v-else-if="!bouquets.length" class="tips-panel"><text>暂无上架花束</text></view>
     <view class="bouquet-list">
-      <view v-for="(bouquet, index) in bouquets" :key="bouquet.id" class="bouquet-card"
-        @click="viewBouquet(bouquet.id)">
+      <view
+        v-for="(bouquet, index) in bouquets"
+        :key="bouquet.id"
+        class="bouquet-card"
+        @click="viewBouquet(bouquet.id)"
+      >
         <view class="cover">
           <image :src="bouquet.image" mode="aspectFill" lazy-load />
         </view>
@@ -74,7 +74,11 @@ function viewBouquet(id: string) {
                 <text class="price-from">起</text>
               </text>
             </view>
-            <button class="choose-button" :aria-label="'查看' + bouquet.name" @click.stop="viewBouquet(bouquet.id)">
+            <button
+              class="choose-button"
+              :aria-label="'查看' + bouquet.name"
+              @click.stop="viewBouquet(bouquet.id)"
+            >
               挑选这一束
               <text class="iconfont icon-youjiantou1" />
             </button>
@@ -96,5 +100,5 @@ function viewBouquet(id: string) {
 </template>
 
 <style lang="scss" scoped>
-@use './bouquets.scss';
+@use './bouquets.scss' as page;
 </style>

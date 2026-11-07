@@ -178,41 +178,23 @@ function fixture(extra = {}) {
     },
   })
 }
-check('ordinary pickup and delivery complete through API-backed pages', async () => {
+check('ordinary pickup and delivery add drafts without creating orders', async () => {
   const h = fixture()
   await h.login()
   const p = await h.checkout()
   await Promise.all([p.submit(), p.submit()])
-  assert.equal(h.orders.size, 1)
-  const no = p.createdOrderNo.value
-  assert(no)
-  assert.equal(h.submissions.length, 1)
-  const result = h.page('payment-result')
-  await result.enter({ orderNo: no })
-  assert.equal(result.order.value.orderNo, no)
-  const userDetail = h.page('order-detail')
-  await userDetail.enter({ orderNo: no })
-  assert.equal(userDetail.order.value.status, 'pending')
-  await h.login('manager')
-  const manager = h.page('store-order-detail')
-  await manager.enter({ orderNo: no })
-  for (let i = 0; i < 2; i++) await manager.advanceOrder()
-  assert.equal(manager.order.value.status, 'ready')
-  h.modalInput = 'wrong'
-  await manager.advanceOrder()
-  assert.equal(manager.order.value.status, 'ready')
-  h.modalInput = '123456'
-  await manager.advanceOrder()
-  assert.equal(manager.order.value.status, 'completed')
-  await h.login()
+  const cart = h.module('stores/modules/cart.ts').useCartStore()
+  assert.equal(h.orders.size, 0)
+  assert.equal(h.submissions.length, 0)
+  assert.equal(cart.items.length, 1)
+  assert.equal(cart.items[0].quantity, 1)
+  assert.equal(h.navigation.url, '/pages/cart/index')
   const delivery = await h.checkout({ method: 'delivery' })
-  assert.equal(delivery.addressMessage.value, '')
   delivery.address.value = '市区 花园路'
   await delivery.submit()
-  await h.login('manager')
-  await manager.enter({ orderNo: delivery.createdOrderNo.value || 'order-2' })
-  for (let i = 0; i < 4; i++) await manager.advanceOrder()
-  assert.equal(manager.order.value.status, 'completed')
+  assert.equal(cart.items.length, 1)
+  assert.equal(cart.items[0].address, '市区 花园路')
+  assert.equal(h.submissions.length, 0)
   h.close()
 })
 check('invalid checkout parameters never request product or quote', async () => {
@@ -248,37 +230,29 @@ check('invalid checkout parameters never request product or quote', async () => 
   assert.equal(h.submissions.length, 0)
   h.close()
 })
-check(
-  'uncertain submission retry preserves key and body; definitive rejection unlocks',
-  async () => {
-    const h = fixture()
-    await h.login()
-    const original = h.orderApi.submitOrderApi
-    let fail = true
-    h.orderApi.submitOrderApi = async (input) => {
-      const result = await original(input)
-      if (fail) {
-        fail = false
-        throw Error('lost response')
-      }
-      return result
-    }
-    const p = await h.checkout()
-    await p.submit()
-    assert(p.locked.value)
-    await p.submit()
-    assert.equal(h.orders.size, 1)
-    assert.deepEqual(h.submissions[0], h.submissions[1])
-    h.orderApi.submitOrderApi = async () => {
-      throw { statusCode: 409 }
-    }
-    const next = await h.checkout()
-    await next.submit()
-    assert.equal(next.locked.value, false)
-    assert(next.quote.value)
-    h.close()
-  },
-)
+check('storage failure preserves form and navigation retry never adds twice', async () => {
+  const h = fixture()
+  await h.login()
+  const p = await h.checkout()
+  const write = h.uni.setStorageSync
+  h.uni.setStorageSync = () => { throw Error('storage full') }
+  await p.submit()
+  assert.equal(p.locked.value, false)
+  assert.equal(p.name.value, '收花人')
+  h.uni.setStorageSync = write
+  const navigate = h.uni.switchTab
+  h.uni.switchTab = (options) => options.fail()
+  await p.submit()
+  assert.equal(p.locked.value, true)
+  const cart = h.module('stores/modules/cart.ts').useCartStore()
+  assert.equal(cart.items[0].quantity, 1)
+  h.uni.switchTab = navigate
+  await p.submit()
+  assert.equal(cart.items[0].quantity, 1)
+  assert.equal(h.navigation.url, '/pages/cart/index')
+  assert.equal(h.submissions.length, 0)
+  h.close()
+})
 check(
   'latest quote wins, failure clears amount, session change clears contacts and stale responses',
   async () => {
@@ -311,7 +285,7 @@ check(
   },
 )
 check(
-  'stock and contact validation block invalid submissions; cancel refreshes server state',
+  'stock and contact validation block invalid cart additions',
   async () => {
     const h = fixture()
     await h.login()
@@ -325,30 +299,25 @@ check(
     assert.equal(h.orders.size, 0)
     p.phone.value = '13800000000'
     await p.submit()
-    const detail = h.page('order-detail')
-    await detail.enter({ orderNo: p.createdOrderNo.value })
-    detail.cancel()
-    await settle()
-    assert.equal(detail.order.value.status, 'cancelled')
+    assert.equal(h.module('stores/modules/cart.ts').useCartStore().items.length, 1)
+    assert.equal(h.orders.size, 0)
     h.close()
   },
 )
 check(
-  'pending adapters reject explicitly and never call request or write local business records',
+  'marketing adapters use real endpoints and never write local business records',
   async () => {
     const h = fixture()
     await h.login()
-    const pending = h.module('utils/integration.ts')
-    for (const [module, fn, args] of [
-      ['api/marketing.ts', 'getWalletApi', []],
-      ['api/marketing.ts', 'claimNewcomerGiftApi', []],
-      ['api/marketing.ts', 'getInvitationApi', []],
-      ['api/production-access.ts', 'payOrderApi', ['1']],
-    ])
-      await assert.rejects(h.module(module)[fn](...args), (error) =>
-        pending.isIntegrationPending(error),
-      )
-    assert.equal(h.calls.length, 0)
+    for (const [fn, url] of [
+      ['getNewcomerGiftApi', '/marketing-activities/new-user-gift/status'],
+      ['claimNewcomerGiftApi', '/marketing-activities/new-user-gift/claim'],
+      ['getInvitationApi', '/user/invitations'],
+    ]) {
+      await assert.rejects(h.module('api/marketing.ts')[fn](), /Unexpected API request/)
+      assert.equal(h.calls.at(-1).url, url)
+    }
+    assert.equal(h.calls.length, 3)
     assert.equal(h.storage.size, 0)
     h.close()
   },
@@ -440,15 +409,20 @@ check('older order list response and previous account data are discarded', async
 })
 
 check(
-  'pending pages distinguish unavailable from empty and never load local fixtures',
+  'failed marketing queries do not show local fixtures as real data',
   async () => {
     const h = fixture()
     await h.login()
     for (const name of ['coupons', 'invite']) {
       const p = h.page(name)
       await p.enter({ id: '1' })
-      assert(p.pending.value, name)
-      assert(p.message.value.includes('暂未开放'), name)
+      if (name === 'invite') {
+        assert.equal(p.resource.pending.value, false, name)
+        assert(p.resource.message.value, name)
+      } else {
+        assert.equal(p.coupons.value.length, 0)
+        assert(p.message.value, name)
+      }
     }
     const home = h.page('index')
     await home.enter()
@@ -521,52 +495,33 @@ check(
     h.close()
   },
 )
-check('coupon switching quotes with backend amounts and failure disables checkout', async () => {
-  const quoteA = deferred()
-  let submitted
+check('coupon switching quotes in order confirmation and failure disables submission', async () => {
+  let failed = false
   const h = fixture({
-    '@/pages/checkout/coupon-config': {
-      couponCheckoutEnabled: true,
-    },
-    '@/api/marketing': {
-      getAvailableCouponsApi: async () => [
-        { id: 'A', title: 'A', status: 'available' },
-        { id: 'B', title: 'B', status: 'available' },
-      ],
-      quoteCouponOrderApi: async (input, id) => {
-        if (id === 'A') return quoteA.promise
-        if (id === 'bad') throw Error()
-        return { productAmount: 3990, discountAmount: 1000, deliveryFee: 0, payableAmount: 2990 }
-      },
-      submitCouponOrderApi: async (input, id) => {
-        submitted = id
-        return (await h.orderApi.submitOrderApi(input)).data
-      },
-    },
+    '@/api/marketing': { getAvailableCouponsApi: async () => ({ data: [{ id: 7, name: '现金券', type: 'CASH', status: 'AVAILABLE', expiresAt: new Date(Date.now() + 3600000).toISOString() }] }) },
   })
   await h.login()
-  const p = await h.checkout()
-  p.chooseCoupon('A')
-  p.chooseCoupon('B')
-  await settle()
+  const entry = await h.checkout()
+  await entry.submit()
+  const cart = h.module('stores/modules/cart.ts').useCartStore()
+  const id = cart.begin(cart.items.map(item => item.id))
+  h.orderApi.quoteOrderApi = async input => {
+    if (failed) throw Error('quote failed')
+    return { data: { productAmount: 3990, discountAmount: input.couponId ? 1000 : 0, deliveryFee: 0, payableAmount: input.couponId ? 2990 : 3990 } }
+  }
+  const p = h.page('order-confirm')
+  await p.enter({ id })
+  p.chooseCoupon('7'); await settle()
   assert.equal(p.quote.value.payableAmount, 2990)
-  quoteA.resolve({ payableAmount: 1 })
-  await settle()
-  assert.equal(p.quote.value.payableAmount, 2990)
-  p.chooseCoupon('bad')
-  await settle()
+  failed = true; await p.load()
   assert.equal(p.quote.value, undefined)
-  await p.submit()
-  assert.equal(h.orders.size, 0)
-  p.chooseCoupon('B')
-  await settle()
-  await p.submit()
-  assert.equal(submitted, 'B')
-  assert.equal(h.submissions[0].expectedAmount, 2990)
+  await p.submit(); assert.equal(h.orders.size, 0)
+  failed = false; await p.load()
+  assert.equal(p.quote.value.payableAmount, 2990)
   h.close()
 })
 check(
-  'invitation counters and rules come from service, failed binding retains source',
+  'invitation counters use service data and first source is kept for registration',
   async () => {
     const data = {
       code: 'server-code',
@@ -578,10 +533,7 @@ check(
       records: [],
     }
     const api = {
-      getInvitationApi: async () => data,
-      bindInvitationApi: async () => {
-        throw Error()
-      },
+      getInvitationApi: async () => ({ data }),
     }
     const h = fixture({ '@/api/marketing': api })
     await h.login()
@@ -593,11 +545,8 @@ check(
     const marketing = h.module('pages/invite/invitation-actions.ts')
     marketing.rememberInvitation('first')
     marketing.rememberInvitation('second')
-    await assert.rejects(marketing.bindPendingInvitation())
     assert.equal(h.storage.get('flower-pending-invite-code'), 'first')
-    api.bindInvitationApi = async () => {}
-    await marketing.bindPendingInvitation()
-    assert.equal(h.storage.has('flower-pending-invite-code'), false)
+    assert.equal(marketing.bindPendingInvitation, undefined)
     h.close()
   },
 )
@@ -622,6 +571,7 @@ check('custom checkout uses independent quote and submission, never ordinary cre
   const h = fixture({
     '@/pages/custom-checkout/bouquet-checkout': {
       customCheckoutEnabled: true,
+      getCustomCoupons: async () => [],
       quoteCustom: async () => ({
         productAmount: 9900,
         discountAmount: 0,
@@ -770,9 +720,8 @@ check('closed store blocks quote and submit; manager conflict refreshes server o
   h.close()
   const other = fixture()
   await other.login()
-  const created = await other.checkout()
-  await created.submit()
-  const no = created.createdOrderNo.value
+  const { data: created } = await other.orderApi.submitOrderApi({ storeId: 1, productId: 1, specId: 11, quantity: 1, method: 'pickup', requestKey: 'manager-fixture', expectedAmount: 3990 })
+  const no = created.orderNo
   await other.login('manager')
   const detail = other.page('store-order-detail')
   await detail.enter({ orderNo: no })
@@ -854,7 +803,8 @@ check(
     assert(p.addressMessage.value.includes('失败'))
     p.address.value = '手动地址'
     await p.submit()
-    assert.equal(h.orders.size, 1)
+    assert.equal(h.orders.size, 0)
+    assert.equal(h.module('stores/modules/cart.ts').useCartStore().items.length, 1)
     h.close()
     const old = deferred()
     const next = fixture({ '@/api/addresses': { listAddressesApi: () => old.promise } })
@@ -976,11 +926,13 @@ check(
   },
 )
 ;(async () => {
-  for (const { name, fn } of checks) {
+  const selected = process.argv[2] ? checks.filter(({ name }) => new RegExp(process.argv[2]).test(name)) : checks
+  assert(selected.length > 0, 'No checks matched')
+  for (const { name, fn } of selected) {
     await fn()
     console.log('PASS ' + name)
   }
-  console.log(checks.length + ' integration checks passed')
+  console.log(selected.length + ' integration checks passed')
 })().catch((error) => {
   console.error(error)
   process.exitCode = 1

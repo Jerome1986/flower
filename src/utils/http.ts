@@ -1,7 +1,6 @@
-import type { RequestOptions, Data } from '@/types/http'
+import { useUserStore } from '@/stores/modules/user'
+import type { Data, RequestOptions } from '@/types/http'
 import { currentReturnUrl } from './login-return'
-import { useUserStore } from '@/stores'
-
 /**
  * 添加拦截器:
  *   拦截 request 请求
@@ -13,19 +12,15 @@ import { useUserStore } from '@/stores'
  *   3. 添加小程序端请求头标识
  *   4. 添加 token 请求头标识
  */
+// API 基地址，默认使用线上服务；本地调试可通过 VITE_API_BASE_URL 覆盖。
+// export const baseURL = (
+//   import.meta.env.VITE_API_BASE_URL || 'https://service.hualishixu.cn/api'
+// ).replace(/\/+$/, '')
 
-// 基地址
 export const baseURL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(
   /\/+$/,
   '',
 )
-
-// 将接口返回的站内图片路径补全为后端域名，小程序不能直接加载站内相对地址。
-export function resolveApiImage(path: string) {
-  if (/^https?:\/\//i.test(path)) return path
-  const origin = /^(https?:\/\/[^/]+)/i.exec(baseURL)?.[1] || ''
-  return path.startsWith('/') && !path.startsWith('//') ? origin + path : ''
-}
 
 // 添加拦截器
 const httpInterceptor = {
@@ -50,9 +45,12 @@ const httpInterceptor = {
     }
   },
 }
-uni.addInterceptor('request', httpInterceptor)
-uni.addInterceptor('uploadFile', httpInterceptor)
-
+// 将接口返回的站内图片路径补全为后端域名，小程序不能直接加载站内相对地址。
+export const resolveApiImage = (path: string) => {
+  if (/^https?:\/\//i.test(path)) return path
+  const origin = /^(https?:\/\/[^/]+)/i.exec(baseURL)?.[1] || ''
+  return path.startsWith('/') && !path.startsWith('//') ? origin + path : ''
+}
 /**
  * 请求函数
  * @param  UniApp.RequestOptions
@@ -66,8 +64,7 @@ uni.addInterceptor('uploadFile', httpInterceptor)
  *    3.2 其他错误 -> 根据后端错误信息轻提示
  *    3.3 网络错误 -> 提示用户换网络
  */
-
-function safeShowToast(message: unknown) {
+const safeShowToast = (message: unknown) => {
   const msg = Array.isArray(message)
     ? message.filter((item) => typeof item === 'string').join('；')
     : typeof message === 'string'
@@ -81,7 +78,6 @@ function safeShowToast(message: unknown) {
     mask: true,
   })
 }
-
 // 2.2 添加类型，支持泛型
 export const request = <T>(options: RequestOptions) => {
   // 1. 返回 Promise 对象
@@ -91,11 +87,12 @@ export const request = <T>(options: RequestOptions) => {
       ...options,
       // 响应成功
       success(res) {
+        const body = res.data as Data<T> | null | undefined
         // 状态码 2xx， axios 就是这样设计的
         if (res.statusCode >= 200 && res.statusCode < 300) {
           // 2.根据后端状态码来提示报错
-          if ((res.data as Data<T>).code !== 200) {
-            safeShowToast((res.data as Data<T>).message || '请求错误')
+          if (body?.code !== 200) {
+            safeShowToast(body?.message || '请求错误')
             reject(res)
             return
           }
@@ -113,11 +110,11 @@ export const request = <T>(options: RequestOptions) => {
                 (returnUrl ? '?returnUrl=' + encodeURIComponent(returnUrl) : ''),
             })
           }
-          safeShowToast((res.data as Data<T>).message || '请求错误')
+          safeShowToast(body?.message || '请求错误')
           reject(res)
         } else {
           // 其他错误 -> 根据后端错误信息轻提示
-          safeShowToast((res.data as Data<T>).message || '请求错误')
+          safeShowToast(body?.message || '请求错误')
           reject(res)
         }
       },
@@ -132,3 +129,5 @@ export const request = <T>(options: RequestOptions) => {
     })
   })
 }
+uni.addInterceptor('request', httpInterceptor)
+uni.addInterceptor('uploadFile', httpInterceptor)

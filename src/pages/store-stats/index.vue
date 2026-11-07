@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { UserRole } from '@/types/user'
-import type { SalesPeriod } from '@/types/report'
-import { computed, ref, watch } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-import { useUserStore } from '@/stores/modules/user'
 import { getManagedStoresApi as getManagedStores } from '@/api/manage-orders'
-import { getSales } from '@/pages/store-stats/sales-summary'
+import { getCurrentUserApi } from '@/api/user'
 import { useResource } from '@/composables/use-resource'
+import { getSales } from '@/pages/store-stats/sales-summary'
+import { useUserStore } from '@/stores/modules/user'
+import type { SalesPeriod } from '@/types/report'
+import { UserRole } from '@/types/user'
+import { onShow } from '@dcloudio/uni-app'
+import { computed, ref, watch } from 'vue'
 const userStore = useUserStore()
-const isManager = computed(() => Boolean(userStore.token) && userStore.profile?.role === UserRole.STORE_MANAGER)
+const isManager = computed(
+  () => Boolean(userStore.token) && userStore.profile?.role === UserRole.STORE_MANAGER,
+)
 const period = ref<SalesPeriod>('today')
-const periods: { id: SalesPeriod; label: string }[] = [
+const periods: {
+  id: SalesPeriod
+  label: string
+}[] = [
   { id: 'today', label: '今日' },
   { id: 'week', label: '近7天' },
   { id: 'month', label: '本月' },
@@ -26,20 +32,42 @@ const sales = resource.data
 const loading = computed(() => storeResource.loading.value || resource.loading.value)
 const message = computed(() => storeResource.message.value || resource.message.value)
 const pending = resource.pending
-async function loadSales() {
+let initVersion = 0
+const loadSales = async () => {
   resource.reset()
   if (isManager.value && store.value) await resource.load()
 }
-let initVersion = 0
-async function init() {
+const init = async () => {
   const version = ++initVersion
   resource.reset()
+  storeResource.reset()
+  const token = userStore.token
+  if (!token) return
+  try {
+    const { data } = await getCurrentUserApi()
+    if (version !== initVersion || token !== userStore.token) return
+    userStore.setProfile(data)
+  } catch (error) {
+    if (version === initVersion && token === userStore.token) resource.fail(error)
+    return
+  }
   if (!isManager.value) return
   await storeResource.load()
   if (version !== initVersion) return
   if (!stores.value.some((item) => item.id === selectedStoreId.value))
     selectedStoreId.value = stores.value[0]?.id
   await loadSales()
+}
+const chooseStore = (event: {
+  detail: {
+    value: string | number
+  }
+}) => {
+  selectedStoreId.value = stores.value[Number(event.detail.value)]?.id
+  void loadSales()
+}
+const goMy = () => {
+  uni.switchTab({ url: '/pages/my/index' })
 }
 onShow(init)
 watch(period, loadSales, { flush: 'sync' })
@@ -51,22 +79,17 @@ watch(
   },
   { flush: 'sync' },
 )
-function chooseStore(event: { detail: { value: string | number } }) {
-  selectedStoreId.value = stores.value[Number(event.detail.value)]?.id
-  void loadSales()
-}
-function goMy() {
-  uni.switchTab({ url: '/pages/my/index' })
-}
 </script>
 
 <template>
   <view v-if="isManager" class="sales-page">
-    <text class="eyebrow">店长工作台</text>
-    <text class="page-title">门店销售</text>
-    <picker v-if="stores.length > 1" :range="stores" range-key="name" @change="chooseStore"
-      ><text class="muted">{{ store?.name }} · 切换门店</text></picker
-    ><text v-else class="muted">{{ store?.name || '门店' }}</text>
+    <view class="page-intro">
+      <text class="eyebrow">店长工作台</text>
+      <text class="page-title">门店销售</text>
+      <picker v-if="stores.length > 1" :range="stores" range-key="name" @change="chooseStore"
+        ><text class="muted">{{ store?.name }} · 切换门店</text></picker
+      ><text v-else class="muted">{{ store?.name || '门店' }}</text>
+    </view>
     <view class="periods">
       <button
         v-for="item in periods"
@@ -144,6 +167,12 @@ function goMy() {
 </template>
 
 <style lang="scss" scoped>
+.page-intro {
+  padding: 32rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
 .sales-page {
   padding: 32rpx $qs-page-spacing;
   color: $qs-font-body;
@@ -159,9 +188,9 @@ function goMy() {
   }
 }
 .eyebrow {
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 22rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .page-title {
   margin: 12rpx 0;
@@ -171,22 +200,26 @@ function goMy() {
 }
 .muted {
   color: $qs-font-dec;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.7;
 }
 .periods {
   display: flex;
   gap: 12rpx;
-  margin: 30rpx 0;
+  margin: 24rpx 0;
   padding: 8rpx;
-  border-radius: 40rpx;
-  background: $qs-brandColor-light;
+  border-radius: 16rpx;
+  background: $qs-input-bg;
 }
 .periods button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
-  padding: 15rpx 0;
-  border-radius: 32rpx;
+  padding: 16rpx 0;
+  border-radius: 12rpx;
   color: $qs-font-dec;
+  min-height: 72rpx;
 }
 .periods .active {
   background: $qs-brandColor;
@@ -196,20 +229,26 @@ function goMy() {
   padding: 32rpx;
   border-radius: 24rpx;
   background: $qs-brandColor-light;
+  border: 1rpx solid #eee4be;
 }
 .amount {
   margin: 12rpx 0;
-  color: $qs-brandColor;
-  font-size: 60rpx;
+  color: $qs-accent-text;
+  font-size: 56rpx;
   font-weight: 600;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .metrics {
-  display: flex;
+  display: grid;
   gap: 12rpx;
   margin-top: 24rpx;
-  padding: 28rpx 16rpx;
+  padding: 24rpx 16rpx;
   border-radius: 24rpx;
   background: $qs-card-bg;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1rpx solid $qs-divider;
 }
 .metrics > view {
   flex: 1;
@@ -219,12 +258,15 @@ function goMy() {
 .metric-value {
   margin-bottom: 8rpx;
   color: $qs-font-title;
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .panel {
   margin-top: 24rpx;
-  padding: 28rpx;
+  padding: 32rpx;
   border-radius: 24rpx;
   background: $qs-card-bg;
   border: 1rpx solid $qs-divider;
@@ -237,19 +279,21 @@ function goMy() {
 .state-row {
   display: flex;
   justify-content: space-between;
-  padding: 22rpx 0;
+  padding: 24rpx 0;
   border-bottom: 1rpx solid $qs-divider;
   font-size: 26rpx;
+  gap: 24rpx;
+  line-height: 1.6;
 }
 .state-row:last-child {
   border-bottom: 0;
 }
 .state-count {
-  color: $qs-brandColor;
+  color: $qs-accent-text;
 }
 .empty-note,
 .footer-note {
-  margin-top: 28rpx;
+  margin-top: 32rpx;
   text-align: center;
   font-size: 22rpx;
   line-height: 1.8;
@@ -260,7 +304,7 @@ function goMy() {
   padding-top: 140rpx;
 }
 .empty button {
-  margin-top: 30rpx;
-  color: $qs-brandColor;
+  margin-top: 32rpx;
+  color: $qs-accent-text;
 }
 </style>

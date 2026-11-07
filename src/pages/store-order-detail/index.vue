@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { UserRole } from '@/types/user'
-import type { PreviewOrder } from '@/types/order'
-import { computed, ref, watch } from 'vue'
-import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
-import { useUserStore } from '@/stores/modules/user'
 import { getCurrentUserApi as getCurrentUser } from '@/api/user'
+import OrderProducts from '@/components/order-products.vue'
+import { orderStageIndex, orderStages, orderStatus } from '@/pages/orders/order-display'
 import {
   getManageOrder,
   manageAction,
-  performAction,
   orderActionLabels,
+  performAction,
 } from '@/pages/store-orders/order-actions'
-import { orderStages, orderStageIndex, orderStatus } from '@/pages/orders/order-display'
+import { useUserStore } from '@/stores/modules/user'
+import type { PreviewOrder } from '@/types/order'
+import { UserRole } from '@/types/user'
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+import { computed, ref, watch } from 'vue'
 const userStore = useUserStore()
 const orderNo = ref('')
 const order = ref<PreviewOrder | null>(null)
@@ -19,6 +20,48 @@ const loading = ref(false)
 const failed = ref(false)
 const busy = ref(false)
 let requestVersion = 0
+const loadOrder = async () => {
+  const version = ++requestVersion
+  const token = userStore.token
+  order.value = null
+  if (!token || !orderNo.value) return
+  loading.value = true
+  failed.value = false
+  try {
+    const { data } = await getCurrentUser()
+    if (version !== requestVersion || token !== userStore.token) return
+    userStore.setProfile(data)
+    if (isManager.value) {
+      const result = await getManageOrder(orderNo.value)
+      if (version === requestVersion && token === userStore.token && result.type === 'ordinary')
+        order.value = result
+    }
+  } catch {
+    if (version === requestVersion) failed.value = true
+  } finally {
+    if (version === requestVersion) loading.value = false
+  }
+}
+const advanceOrder = async (cancel = false) => {
+  if (busy.value || loading.value || !isManager.value || !order.value) return
+  const token = userStore.token
+  busy.value = true
+  try {
+    await performAction(order.value, cancel)
+    if (token === userStore.token) await loadOrder()
+  } finally {
+    if (token === userStore.token) busy.value = false
+  }
+}
+const contactCustomer = () => {
+  if (order.value) uni.makePhoneCall({ phoneNumber: order.value.phone })
+}
+const copyOrderNo = () => {
+  if (order.value) uni.setClipboardData({ data: order.value.orderNo })
+}
+const goOrders = () => {
+  uni.redirectTo({ url: '/pages/store-orders/index' })
+}
 onUnload(() => {
   requestVersion++
 })
@@ -46,48 +89,6 @@ onLoad((options) => {
 onShow(() => {
   void loadOrder()
 })
-async function loadOrder() {
-  const version = ++requestVersion
-  const token = userStore.token
-  order.value = null
-  if (!token || !orderNo.value) return
-  loading.value = true
-  failed.value = false
-  try {
-    const { data } = await getCurrentUser()
-    if (version !== requestVersion || token !== userStore.token) return
-    userStore.setProfile(data)
-    if (isManager.value) {
-      const result = await getManageOrder(orderNo.value)
-      if (version === requestVersion && token === userStore.token && result.type === 'ordinary')
-        order.value = result
-    }
-  } catch {
-    if (version === requestVersion) failed.value = true
-  } finally {
-    if (version === requestVersion) loading.value = false
-  }
-}
-async function advanceOrder(cancel = false) {
-  if (busy.value || !order.value) return
-  const token = userStore.token
-  busy.value = true
-  try {
-    await performAction(order.value, cancel)
-    if (token === userStore.token) await loadOrder()
-  } finally {
-    if (token === userStore.token) busy.value = false
-  }
-}
-function contactCustomer() {
-  if (order.value) uni.makePhoneCall({ phoneNumber: order.value.phone })
-}
-function copyOrderNo() {
-  if (order.value) uni.setClipboardData({ data: order.value.orderNo })
-}
-function goOrders() {
-  uni.redirectTo({ url: '/pages/store-orders/index' })
-}
 </script>
 
 <template>
@@ -147,14 +148,7 @@ function goOrders() {
     </view>
     <view class="panel">
       <text class="section-title">商品与金额</text>
-      <view class="product-row">
-        <image :src="order.image" mode="aspectFill" />
-        <view class="product-copy">
-          <text class="product-name">{{ order.productName }}</text>
-          <text class="muted">{{ order.specification }} / {{ order.unit }}</text>
-          <text class="muted">数量 {{ order.quantity }} {{ order.unit }}</text>
-        </view>
-      </view>
+      <OrderProducts :order="order" />
       <view class="amount-row">
         <text>商品金额</text>
         <text>¥{{ productAmount.toFixed(2) }}</text>
@@ -229,5 +223,5 @@ function goOrders() {
 </template>
 
 <style lang="scss" scoped>
-@use '../order-detail/detail.scss';
+@use '../order-detail/detail.scss' as page;
 </style>

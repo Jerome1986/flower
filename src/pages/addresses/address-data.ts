@@ -1,9 +1,7 @@
-
 import type { Address } from '@/types/address'
-// 本地收货地址结构，供地址管理和确认订单共用。
-
-// 按用户读取地址，兼容原测试用户的旧地址。
-export function readAddresses(userId?: string): Address[] {
+// 旧版本本地地址缓存的兼容读写工具；当前地址管理页通过接口读写地址。
+// 按用户标识读取本地缓存；未传标识时返回空列表，测试用户兼容旧缓存键。
+export const readAddresses = (userId?: string): Address[] => {
   if (!userId) return []
   return (
     uni.getStorageSync(`flower-addresses-${userId}`) ||
@@ -11,7 +9,7 @@ export function readAddresses(userId?: string): Address[] {
     []
   )
 }
-// 地址与用户绑定，切换账户不会覆盖别人的地址。
-export function saveAddresses(userId: string, addresses: Address[]) {
+// 按用户标识写入本地地址缓存，避免切换账户时覆盖其他用户的数据。
+export const saveAddresses = (userId: string, addresses: Address[]) => {
   uni.setStorageSync(`flower-addresses-${userId}`, addresses)
 }

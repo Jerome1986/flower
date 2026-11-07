@@ -1,6 +1,25 @@
 import type { PreviewOrder } from '@/types/order'
+// 普通已付款订单在接单前可申请整单退款，最终状态以服务端为准。
+export const canCancelUserOrder = (order?: PreviewOrder | null) => {
+  return Boolean(
+    order &&
+      ((order.backendStatus === 'PENDING_PAYMENT' && order.paymentStatus === 'PENDING') ||
+        (order.paymentStatus === 'PAID' &&
+          order.backendStatus ===
+            (order.type === 'custom' ? 'PENDING_DISPATCH' : 'PENDING_ACCEPTANCE')) ||
+        (order.paymentStatus === 'NOT_REQUIRED' &&
+          order.backendStatus ===
+            (order.type === 'custom' ? 'PENDING_DISPATCH' : 'PENDING_ACCEPTANCE'))),
+  )
+}
 // 统一普通订单和平台订单的状态名称。
-export function orderStatus(order: PreviewOrder) {
+export const orderStatus = (order: PreviewOrder) => {
+  if (order.status === 'cancelling')
+    return order.paymentStatus === 'REFUND_FAILED'
+      ? '退款待处理'
+      : order.paymentStatus === 'REFUNDING'
+      ? '退款中'
+      : '取消处理中'
   if (order.status === 'unpaid') return '已下单 · 未付款'
   if (order.status === 'cancelled') return order.backendStatus === 'CLOSED' ? '已关闭' : '已取消'
   if (order.status === 'completed') return '已完成'
@@ -11,8 +30,9 @@ export function orderStatus(order: PreviewOrder) {
   return order.status === 'preparing' ? '备货中' : '待接单'
 }
 // 用户详情标题，按状态逐项判断便于修改。
-export function orderTitle(order: PreviewOrder) {
-  if (order.status === 'unpaid') return '订单已创建'
+export const orderTitle = (order: PreviewOrder) => {
+  if (order.status === 'cancelling') return orderStatus(order)
+  if (order.status === 'unpaid') return '订单已创建，待支付'
   if (order.status === 'cancelled')
     return order.backendStatus === 'CLOSED' ? '订单已关闭' : '订单已取消'
   if (order.status === 'completed') return '鲜花订单已完成'
@@ -24,10 +44,14 @@ export function orderTitle(order: PreviewOrder) {
   return order.status === 'preparing' ? '花店正在准备鲜花' : '等待花店接单'
 }
 // 订单列表与详情共用履约提示。
-export function orderHint(order: PreviewOrder) {
-  if (order.status === 'unpaid') return '订单尚未付款'
-  if (order.status === 'cancelled')
-    return order.type === 'custom' ? '订单已结束' : '订单已结束，预留库存已释放'
+export const orderHint = (order: PreviewOrder) => {
+  if (order.status === 'cancelling')
+    return order.paymentStatus === 'REFUND_FAILED'
+      ? '退款需要人工处理，请联系门店；请勿重复付款'
+      : '取消申请处理中，退款到账及优惠券返还请以最新订单状态为准'
+  if (order.paymentStatus === 'REFUNDED') return '款项已原路退回，实际到账时间以支付账户为准'
+  if (order.status === 'unpaid') return '请在订单有效期内完成微信支付；超时将自动关闭，也可主动取消'
+  if (order.status === 'cancelled') return '可以继续挑选喜欢的鲜花'
   if (order.status === 'completed') return '这份心意已送达，感谢你让鲜花走进日常'
   if (order.status === 'delivering') return '请保持电话畅通，耐心等待鲜花送达'
   if (order.type === 'custom') return '平台将安排合作方制作配送'
@@ -39,7 +63,10 @@ export function orderHint(order: PreviewOrder) {
     ? '每一束心意都在认真准备，请耐心等待'
     : '门店已收到订单，将为你准备鲜花'
 }
-export function orderPaymentLabel(order: PreviewOrder) {
+export const orderPaymentLabel = (order: PreviewOrder) => {
+  if (order.paymentStatus === 'REFUNDING') return '退款中'
+  if (order.paymentStatus === 'REFUNDED') return '已退款'
+  if (order.paymentStatus === 'REFUND_FAILED') return '退款待处理'
   if (order.paymentStatus === 'PAID') return '已付款'
   if (order.paymentStatus === 'NOT_REQUIRED')
     return order.total > 0 ? '未付款' : '0元订单，无需付款'
@@ -47,7 +74,8 @@ export function orderPaymentLabel(order: PreviewOrder) {
   return '未付款'
 }
 // 用户和店长共享完整履约步骤。
-export function orderStages(order?: PreviewOrder | null) {
+export const orderStages = (order?: PreviewOrder | null) => {
+  if (order?.status === 'cancelling') return [orderStatus(order)]
   if (order?.status === 'unpaid') return ['已下单', '未付款']
   if (order?.status === 'cancelled') return [order.backendStatus === 'CLOSED' ? '已关闭' : '已取消']
   if (order?.type === 'custom') return ['待派单', '已派单', '配送中', '已完成']
@@ -56,7 +84,8 @@ export function orderStages(order?: PreviewOrder | null) {
     : ['待接单', '备货中', '待自取', '已完成']
 }
 // 根据状态取得当前进度，避免页面各自推算。
-export function orderStageIndex(order?: PreviewOrder | null) {
+export const orderStageIndex = (order?: PreviewOrder | null) => {
   if (!order) return 0
+  if (order.status === 'unpaid') return 1
   return Math.max(0, orderStages(order).indexOf(orderStatus(order)))
 }

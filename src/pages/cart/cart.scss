@@ -1,0 +1,326 @@
+@use '../../uni.scss' as *;
+
+.cart-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: $qs-pageBackGroundColor;
+  color: $qs-font-body;
+  padding: 24rpx 24rpx calc(148rpx + var(--window-bottom, 0px));
+}
+button {
+  margin: 0;
+  padding: 0;
+  font-size: 26rpx;
+  line-height: 1.5;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  &::after {
+    border: none;
+  }
+}
+.store-row,
+.product-row,
+.price-row,
+.footer-main,
+.stepper {
+  display: flex;
+  align-items: center;
+  border-radius: 12rpx;
+}
+.delete {
+  color: $qs-font-dec;
+  font-size: 24rpx;
+  padding: 12rpx;
+}
+.card {
+  background: #fff;
+  border: 1rpx solid $qs-border;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+.store-row {
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  gap: 16rpx;
+}
+.product-row {
+  gap: 16rpx;
+}
+.item-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+button[disabled] {
+  opacity: 0.4;
+}
+.cover {
+  flex-shrink: 0;
+  width: 130rpx;
+  height: 148rpx;
+  border-radius: 16rpx;
+  background: $qs-pageBackGroundColor;
+}
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.spec {
+  display: block;
+  font-size: 24rpx;
+  color: $qs-font-dec;
+  margin: 12rpx 0 24rpx;
+}
+.price-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.price {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $qs-accent-text;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.stepper {
+  gap: 8rpx;
+  flex-shrink: 0;
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 56rpx;
+    height: 56rpx;
+    border: 2rpx solid $qs-brandColor-pressed;
+    border-radius: 12rpx;
+    background: $qs-brandColor;
+    color: $qs-font-inverse;
+    line-height: 1;
+    &[disabled] {
+      background: $qs-input-bg;
+      border-color: $qs-border;
+      color: $qs-font-dec;
+      opacity: 1;
+      .stepper-line {
+        background: $qs-font-dec;
+      }
+    }
+  }
+  text {
+    min-width: 48rpx;
+    text-align: center;
+    font-size: 26rpx;
+    font-weight: 600;
+    color: $qs-font-title;
+    font-variant-numeric: tabular-nums;
+  }
+}
+// 使用实际 view 绘制加减号，明确尺寸与颜色，保持几何居中。
+.stepper-symbol {
+  position: relative;
+  flex-shrink: 0;
+  width: 24rpx;
+  height: 24rpx;
+  pointer-events: none;
+}
+.stepper-line {
+  position: absolute;
+  left: 0;
+  top: 10rpx;
+  width: 24rpx;
+  height: 4rpx;
+  border-radius: 2rpx;
+  background: $qs-font-inverse;
+  &--vertical {
+    left: 10rpx;
+    top: 0;
+    width: 4rpx;
+    height: 24rpx;
+  }
+}
+.details {
+  border-top: 1rpx solid $qs-divider;
+  padding-top: 24rpx;
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  color: $qs-font-dec;
+  line-height: 1.8;
+  > text {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+}
+.method {
+  color: $qs-font-title;
+  margin-right: 12rpx;
+}
+// 收花信息卡片区分标题、联系人和地址，整卡可点击。
+.cart-page .address-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 32rpx 24rpx;
+  margin: 0 0 24rpx;
+  box-sizing: border-box;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+  text-align: left;
+  line-height: 1.5;
+}
+.address-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  margin-right: 24rpx;
+  border-radius: 50%;
+  background: $qs-brandColor-light;
+  color: $qs-font-inverse;
+  .iconfont { font-size: 34rpx; }
+}
+.address-content {
+  flex: 1;
+  min-width: 0;
+}
+.address-heading,
+.address-contact {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.address-label {
+  font-size: 22rpx;
+  color: $qs-font-dec;
+}
+.address-contact {
+  margin-top: 12rpx;
+  color: $qs-font-title;
+  overflow-wrap: anywhere;
+}
+.contact-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.contact-phone { font-size: 26rpx; }
+.address-location {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $qs-font-body;
+  overflow-wrap: anywhere;
+}
+.address-arrow {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  color: $qs-font-dec2;
+  font-size: 24rpx;
+}
+.feedback,
+.unavailable {
+  display: block;
+  color: #a46130;
+  font-size: 24rpx;
+  margin: 16rpx 0;
+}
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--window-bottom, 0px);
+  z-index: 10;
+  background: $qs-brandColor-light;
+  padding: 20rpx 24rpx;
+  border-top: 1rpx solid $qs-border;
+  border-bottom: 1rpx solid $qs-border;
+  // 当前页使用原生 TabBar，结算栏上方布局不再叠加底部安全区。
+}
+.footer-main {
+  gap: 24rpx;
+}
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+}
+.total {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.muted {
+  color: $qs-font-dec;
+  font-size: 22rpx;
+}
+.primary {
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  font-weight: 600;
+  font-size: 28rpx;
+  flex-shrink: 0;
+  min-height: 88rpx;
+}
+.footer-main .primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 192rpx;
+  height: 76rpx;
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 150rpx 24rpx;
+  gap: 24rpx;
+  image {
+    width: 120rpx;
+    height: 120rpx;
+    opacity: 0.65;
+  }
+  .primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200rpx;
+    height: 72rpx;
+    min-height: 72rpx;
+    margin-top: 24rpx;
+    padding: 0;
+    font-size: 26rpx;
+    line-height: 1;
+    text-align: center;
+  }
+}
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+

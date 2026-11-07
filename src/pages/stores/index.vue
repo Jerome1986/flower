@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import type { FlowerStore } from '@/types/store'
-import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
 import { getStores } from '@/pages/stores/shop-data'
-
+import type { FlowerStore } from '@/types/store'
+import { onLoad } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 // 当前选择的门店标识。
 const selectedId = ref('')
 const stores = ref<FlowerStore[]>([])
 const loading = ref(false)
 const failed = ref(false)
-async function loadStores() {
-  loading.value = true
-  failed.value = false
-  try { stores.value = await getStores() }
-  catch { stores.value = []; failed.value = true }
-  finally { loading.value = false }
-}
 // 门店名称或地址的搜索关键词。
 const keyword = ref('')
 // 当前收花方式，用于展示配送区域和费用。
@@ -24,16 +16,20 @@ const method = ref('pickup')
 const visibleStores = computed(() =>
   stores.value.filter((store) => `${store.name}${store.address}`.includes(keyword.value.trim())),
 )
-
-// 读取下单页传入的门店和收花方式。
-onLoad((options) => {
-  selectedId.value = String(uni.getStorageSync('flower-selected-store') || '')
-  void loadStores()
-  if (options?.storeId) selectedId.value = options.storeId
-  if (options?.method === 'delivery') method.value = 'delivery'
-})
+const loadStores = async () => {
+  loading.value = true
+  failed.value = false
+  try {
+    stores.value = await getStores()
+  } catch {
+    stores.value = []
+    failed.value = true
+  } finally {
+    loading.value = false
+  }
+}
 // 保存选择的门店并返回来源页。
-function selectStore(store: FlowerStore) {
+const selectStore = (store: FlowerStore) => {
   if (!store.open) return
   uni.setStorageSync('flower-selected-store', store.id)
   // 当前页面向来源详情页传递门店选择结果。
@@ -42,21 +38,28 @@ function selectStore(store: FlowerStore) {
   uni.navigateBack()
 }
 // 点击卡片切换高亮，确认按钮才提交门店选择。
-function highlightStore(store: FlowerStore) {
+const highlightStore = (store: FlowerStore) => {
   selectedId.value = store.id
 }
 // 复制门店地址，方便查看或转发。
-function copyAddress(address: string) {
+const copyAddress = (address: string) => {
   uni.setClipboardData({ data: address })
 }
 // 调用系统拨号入口联系门店。
-function callStore(phone: string) {
+const callStore = (phone: string) => {
   uni.makePhoneCall({ phoneNumber: phone })
 }
 // 清空搜索条件并恢复全部门店。
-function clearSearch() {
+const clearSearch = () => {
   keyword.value = ''
 }
+// 读取下单页传入的门店和收花方式。
+onLoad((options) => {
+  selectedId.value = String(uni.getStorageSync('flower-selected-store') || '')
+  void loadStores()
+  if (options?.storeId) selectedId.value = options.storeId
+  if (options?.method === 'delivery') method.value = 'delivery'
+})
 </script>
 
 <template>
@@ -173,5 +176,5 @@ function clearSearch() {
 </template>
 
 <style lang="scss" scoped>
-@use './stores.scss';
+@use './stores.scss' as page;
 </style>

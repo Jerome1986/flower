@@ -1,7 +1,7 @@
 .agreement-page {
   box-sizing: border-box;
   min-height: calc(100vh - var(--window-top, 0px));
-  padding: 40rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 24rpx calc(48rpx + env(safe-area-inset-bottom));
   background: #fcfaf4;
   color: #343b35;
 }
@@ -9,7 +9,7 @@
 .agreement-content {
   max-width: 900rpx;
   margin: 0 auto;
-  padding: 36rpx 28rpx;
+  padding: 32rpx;
   border: 1rpx solid #eee9dc;
   border-radius: 24rpx;
   background: #fff;
@@ -24,9 +24,9 @@
 }
 
 .agreement-title { font-size: 40rpx; font-weight: 600; line-height: 1.5; }
-.agreement-meta { margin-top: 14rpx; color: #85877d; font-size: 23rpx; line-height: 1.8; }
-.agreement-intro { margin-top: 28rpx; font-size: 27rpx; line-height: 1.9; }
+.agreement-meta { margin-top: 14rpx; color: #76776c; font-size: 24rpx; line-height: 1.8; }
+.agreement-intro { margin-top: 28rpx; font-size: 28rpx; line-height: 1.9; }
 .agreement-section { margin-top: 32rpx; }
-.section-title { margin-bottom: 12rpx; font-size: 29rpx; font-weight: 600; line-height: 1.6; }
-.section-text { font-size: 27rpx; line-height: 1.9; overflow-wrap: anywhere; }
+.section-title { margin-bottom: 12rpx; font-size: 30rpx; font-weight: 600; line-height: 1.6; }
+.section-text { font-size: 28rpx; line-height: 1.9; overflow-wrap: anywhere; }
 .section-text + .section-text { margin-top: 12rpx; }

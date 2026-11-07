@@ -4,8 +4,10 @@
 .product-page .specification {
   margin: 12rpx 12rpx 0 0;
   padding: 16rpx 24rpx;
-  border: none;
+  border: 1rpx solid transparent;
   font-size: 26rpx;
+  background: $qs-input-bg;
+  color: $qs-font-body;
 }
 .product-page .specification::after {
   border: none;
@@ -15,7 +17,8 @@
 }
 .product-page .specification.selected {
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
+  border-color: $qs-brandColor;
 }
 .product-page .title-row {
   flex-wrap: wrap;
@@ -29,13 +32,13 @@
 .delivery-option {
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 16rpx;
   margin-top: 16rpx;
-  padding: 22rpx;
+  padding: 24rpx;
   border: 1rpx solid $qs-border;
   border-radius: 16rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 26rpx;
   > .iconfont {
     flex: none;
@@ -46,13 +49,32 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20rpx;
-  padding-top: 22rpx;
-  margin-top: 22rpx;
+  gap: 24rpx;
+  padding-top: 24rpx;
+  margin-top: 24rpx;
   border-top: 1rpx solid $qs-divider;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.8;
   > text:last-child {
     text-align: right;
   }
 }
+
+// 单按钮购买栏与普通商品的双按钮购买栏保持相同触达尺寸。
+.product-page .purchase-bar > .buy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 240rpx;
+  min-height: 88rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 16rpx;
+  background: $qs-brandColor;
+  color: $qs-font-inverse;
+  font-size: 28rpx;
+  text-align: center;
+}
+.product-page .purchase-bar > view { flex: 1; min-width: 0; }
+.product-page .purchase-bar > view .price { white-space: normal; overflow-wrap: anywhere; }
+.product-page .purchase-bar > .buy-button[disabled] { background: $qs-disabled-bg; color: $qs-font-dec; opacity: 1; }

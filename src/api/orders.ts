@@ -1,8 +1,15 @@
 import { request } from '@/utils/http'
-import type { OrderSelection, OrderQuote, OrderSubmission, OrderResponse } from '@/types/order-api'
+import type {
+  OrderSelection,
+  OrderQuote,
+  OrderSubmission,
+  OrderResponse,
+  CartOrderSelection,
+  CartOrderSubmission,
+} from '@/types/order-api'
 
-// 获取订单报价。
-export const quoteOrderApi = (data: OrderSelection) => {
+/** 获取订单报价。 */
+export const quoteOrderApi = (data: OrderSelection | CartOrderSelection) => {
   return request<OrderQuote>({
     method: 'POST',
     url: '/user/orders/quote',
@@ -10,8 +17,8 @@ export const quoteOrderApi = (data: OrderSelection) => {
   })
 }
 
-// 创建普通订单。
-export const submitOrderApi = (data: OrderSubmission) => {
+/** 创建普通订单。 */
+export const submitOrderApi = (data: OrderSubmission | CartOrderSubmission) => {
   return request<OrderResponse>({
     method: 'POST',
     url: '/user/orders',
@@ -19,7 +26,7 @@ export const submitOrderApi = (data: OrderSubmission) => {
   })
 }
 
-// 获取用户订单列表。
+/** 获取用户订单列表。 */
 export const getOrdersApi = () => {
   return request<OrderResponse[]>({
     method: 'GET',
@@ -27,7 +34,7 @@ export const getOrdersApi = () => {
   })
 }
 
-// 获取订单详情。
+/** 获取订单详情。 */
 export const getOrderApi = (orderNo: string) => {
   return request<OrderResponse>({
     method: 'GET',
@@ -35,7 +42,7 @@ export const getOrderApi = (orderNo: string) => {
   })
 }
 
-// 取消订单。
+/** 取消订单。 */
 export const cancelOrderApi = (orderNo: string) => {
   return request<OrderResponse>({
     method: 'POST',

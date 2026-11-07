@@ -1,7 +1,7 @@
 import { request } from '@/utils/http'
 import type { StoreResponse, ProductResponse } from '@/types/shop'
 
-// 获取门店列表。
+/** 获取门店列表。 */
 export const getStoresApi = () => {
   return request<StoreResponse[]>({
     method: 'GET',
@@ -9,7 +9,7 @@ export const getStoresApi = () => {
   })
 }
 
-// 获取门店详情。
+/** 获取门店详情。 */
 export const getStoreApi = (id: string) => {
   return request<StoreResponse>({
     method: 'GET',
@@ -17,7 +17,7 @@ export const getStoreApi = (id: string) => {
   })
 }
 
-// 获取门店商品列表。
+/** 获取门店商品列表。 */
 export const getProductsApi = (storeId: string) => {
   return request<ProductResponse[]>({
     method: 'GET',
@@ -25,7 +25,7 @@ export const getProductsApi = (storeId: string) => {
   })
 }
 
-// 获取门店商品详情。
+/** 获取门店商品详情。 */
 export const getProductApi = (storeId: string, id: string) => {
   return request<ProductResponse>({
     method: 'GET',

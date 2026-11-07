@@ -5,6 +5,8 @@
     "name": "jerome"
   },
   "scripts": {
+    "lint:check": "node scripts/lint-check.cjs",
+    "check:core": "node scripts/check-core.cjs",
     "check:integration": "node scripts/check-preview-flow.cjs",
     "check:preview": "node scripts/check-preview-flow.cjs",
     "dev:app": "uni -p app",

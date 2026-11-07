@@ -1,8 +1,14 @@
 @use '../../uni.scss' as *;
+.page-intro {
+  padding: 32rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-card-bg;
+}
 
 // 地址页沿用项目主题色与圆角卡片。
 .addresses-page {
-  padding: 28rpx $qs-page-spacing calc(160rpx + env(safe-area-inset-bottom));
+  padding: 32rpx $qs-page-spacing calc(160rpx + env(safe-area-inset-bottom));
   color: $qs-font-body;
   button {
     margin: 0;
@@ -15,9 +21,9 @@
 }
 .eyebrow {
   display: block;
-  font-size: 21rpx;
-  letter-spacing: 2rpx;
-  color: $qs-brandColor;
+  font-size: 22rpx;
+  letter-spacing: 0;
+  color: $qs-accent-text;
 }
 .page-title {
   display: block;
@@ -29,18 +35,18 @@
 .subtitle {
   display: block;
   margin-top: 12rpx;
-  font-size: 23rpx;
+  font-size: 24rpx;
   color: $qs-font-dec;
   line-height: 1.8;
 }
 .address-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
-  margin-top: 28rpx;
+  gap: 24rpx;
+  margin-top: 32rpx;
 }
 .address-card {
-  padding: 28rpx;
+  padding: 32rpx;
   border: 1rpx solid $qs-divider;
   border-radius: 24rpx;
   background: $qs-card-bg;
@@ -52,7 +58,7 @@
   gap: 16rpx;
 }
 .contact-name {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: $qs-font-title;
 }
@@ -63,19 +69,19 @@
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
-  font-size: 20rpx;
+  color: $qs-accent-text;
+  font-size: 22rpx;
 }
 .region-text {
   display: block;
-  margin-top: 18rpx;
-  font-size: 23rpx;
+  margin-top: 16rpx;
+  font-size: 24rpx;
   color: $qs-font-dec;
   line-height: 1.8;
 }
 .detail-text {
   display: block;
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   font-size: 26rpx;
   line-height: 1.8;
   overflow-wrap: anywhere;
@@ -86,15 +92,16 @@
   justify-content: space-between;
   gap: 16rpx;
   margin-top: 24rpx;
-  padding-top: 22rpx;
+  padding-top: 24rpx;
   border-top: 1rpx solid $qs-divider;
 }
 .addresses-page .default-button {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 8rpx;
   color: $qs-font-dec;
   font-size: 22rpx;
+  min-height: 72rpx;
 }
 .selection-dot {
   width: 28rpx;
@@ -108,10 +115,10 @@
 }
 .address-actions {
   display: flex;
-  gap: 22rpx;
+  gap: 24rpx;
   button {
-    font-size: 23rpx;
-    color: $qs-brandColor;
+    font-size: 24rpx;
+    color: $qs-accent-text;
   }
 }
 .empty-state {
@@ -129,27 +136,27 @@
   height: 112rpx;
   border-radius: 50%;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 58rpx;
 }
 .empty-title {
-  margin-top: 26rpx;
+  margin-top: 24rpx;
   color: $qs-font-title;
   font-size: 30rpx;
 }
 .demo-note {
   display: block;
-  margin-top: 28rpx;
+  margin-top: 32rpx;
   color: $qs-font-dec2;
   text-align: center;
-  font-size: 21rpx;
+  font-size: 22rpx;
 }
 .bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20rpx $qs-page-spacing calc(20rpx + env(safe-area-inset-bottom));
+  padding: 24rpx $qs-page-spacing calc(24rpx + env(safe-area-inset-bottom));
   border-top: 1rpx solid $qs-divider;
   background: $qs-card-bg;
 }
@@ -160,11 +167,12 @@
   justify-content: center;
   gap: 12rpx;
   width: 100%;
-  padding: 22rpx;
-  border-radius: 40rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
   background: $qs-brandColor;
   color: $qs-font-inverse;
-  font-size: 27rpx;
+  font-size: 28rpx;
+  min-height: 88rpx;
 }
 .editor-mask {
   position: fixed;
@@ -177,7 +185,7 @@
 .editor-panel {
   width: 100%;
   max-height: 90vh;
-  padding: 28rpx $qs-page-spacing calc(24rpx + env(safe-area-inset-bottom));
+  padding: 32rpx $qs-page-spacing calc(24rpx + env(safe-area-inset-bottom));
   border-radius: 28rpx 28rpx 0 0;
   background: $qs-card-bg;
 }
@@ -188,6 +196,9 @@
   button {
     width: 60rpx;
     height: 60rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 36rpx;
     color: $qs-font-dec;
   }
@@ -198,16 +209,16 @@
   color: $qs-font-title;
 }
 .editor-body {
-  max-height: 58vh;
+  height: 58vh;
   margin: 12rpx 0 24rpx;
 }
 .form-row {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  padding: 26rpx 0;
+  padding: 16rpx 0;
   border-bottom: 1rpx solid $qs-divider;
-  font-size: 25rpx;
+  font-size: 26rpx;
   > text {
     flex: none;
     width: 116rpx;
@@ -215,30 +226,45 @@
   input {
     flex: 1;
     min-width: 0;
-    font-size: 24rpx;
-  }
+    font-size: 26rpx;
+  height: 64rpx;
+  padding: 0;
+  line-height: 64rpx;
+}
+  min-height: 96rpx;
 }
 .detail-field {
   padding-top: 24rpx;
-  font-size: 25rpx;
+  font-size: 26rpx;
   textarea {
     width: 100%;
     height: 120rpx;
-    margin-top: 18rpx;
-    padding: 18rpx;
+    margin-top: 16rpx;
+    padding: 16rpx;
     box-sizing: border-box;
-    border-radius: 14rpx;
+    border-radius: 16rpx;
     background: $qs-input-bg;
     font-size: 24rpx;
     line-height: 1.8;
   }
+}
+.addresses-page .search-address-button {
+  margin: 24rpx 0 12rpx;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  background: $qs-brandColor-light;
+  color: $qs-accent-text;
+  font-size: 26rpx;
+}
+.location-error {
+  color: #b34a36;
 }
 .addresses-page .default-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 26rpx 0;
+  padding: 24rpx 0;
   font-size: 24rpx;
 }
 .toggle-track {
@@ -266,7 +292,7 @@
   display: block;
   padding-bottom: 12rpx;
   color: $qs-font-dec;
-  font-size: 21rpx;
+  font-size: 22rpx;
   line-height: 1.8;
 }
 // 选择模式突出当前地址并提供明确的确认按钮。
@@ -275,10 +301,17 @@
 }
 .addresses-page .select-address-button {
   width: 100%;
-  margin-top: 22rpx;
+  margin-top: 24rpx;
   padding: 16rpx;
-  border-radius: 30rpx;
+  border-radius: 16rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 24rpx;
+}
+
+.address-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
 }

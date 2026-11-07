@@ -1,19 +1,21 @@
-import { getManageOrdersApi, getManageOrderApi, performOrderActionApi } from '@/api/manage-orders'
-import { useUserStore } from '@/stores/modules/user'
+import { getManageOrderApi, getManageOrdersApi, performOrderActionApi } from '@/api/manage-orders'
 import { mapOrder } from '@/pages/orders/order-data'
-import type { PreviewOrder } from '@/types/order'
+import { useUserStore } from '@/stores/modules/user'
 import type { ManageOrdersParams } from '@/types/manage-orders'
-
+import type { PreviewOrder } from '@/types/order'
 export const orderActionLabels: Record<string, string> = {
   CREATE: '创建订单',
   CANCEL: '取消订单',
+  CANCEL_REQUEST: '申请取消',
+  PAY: '支付成功',
+  REFUND: '退款成功',
   EXPIRE: '超时关闭',
   accept: '接单',
   ready: '备货完成',
   deliver: '开始配送',
   complete: '交付完成',
 }
-export async function getManageOrders(params: ManageOrdersParams) {
+export const getManageOrders = async (params: ManageOrdersParams) => {
   const { data } = await getManageOrdersApi({
     page: params.page,
     pageSize: params.pageSize,
@@ -22,12 +24,13 @@ export async function getManageOrders(params: ManageOrdersParams) {
   })
   return { list: data.list.map(mapOrder), total: data.total }
 }
-export async function getManageOrder(no: string) {
+export const getManageOrder = async (no: string) => {
   const { data } = await getManageOrderApi(no)
   return mapOrder(data)
 }
-export function manageAction(order: PreviewOrder) {
-  if (order.type === 'custom') return undefined
+export const manageAction = (order: PreviewOrder) => {
+  if (order.type === 'custom' || order.backendStatus === 'CANCELLING') return undefined
+  if (!['PAID', 'NOT_REQUIRED'].includes(order.paymentStatus || '')) return undefined
   if (order.status === 'pending') return { action: 'accept', label: '接单' }
   if (order.status === 'preparing') return { action: 'ready', label: '备货完成' }
   if (order.status === 'ready')
@@ -37,10 +40,10 @@ export function manageAction(order: PreviewOrder) {
   if (order.status === 'delivering') return { action: 'complete', label: '配送完成' }
   return undefined
 }
-export function performAction(
+export const performAction = (
   order: PreviewOrder,
   cancel = false,
-): Promise<PreviewOrder | undefined> {
+): Promise<PreviewOrder | undefined> => {
   if (order.type === 'custom') return Promise.resolve(undefined)
   const token = useUserStore().token
   const next = cancel ? { action: 'cancel', label: '取消订单' } : manageAction(order)
@@ -54,6 +57,10 @@ export function performAction(
       placeholderText: '请输入客户出示的6位取货码',
       success: async (result) => {
         if (!result.confirm || token !== useUserStore().token) return resolve(undefined)
+        if (pickup && !/^\d{6}$/.test(result.content?.trim() || '')) {
+          uni.showToast({ title: '请输入6位数字取货码', icon: 'none' })
+          return resolve(undefined)
+        }
         try {
           const { data } = await performOrderActionApi(order.orderNo, {
             action: next.action,

@@ -1,10 +1,9 @@
-import { getStoresApi, getStoreApi, getProductsApi, getProductApi } from '@/api/shop'
-import { resolveApiImage } from '@/utils/http'
-import type { FlowerStore } from '@/types/store'
+import { getProductApi, getProductsApi, getStoreApi, getStoresApi } from '@/api/shop'
 import type { Fulfillment } from '@/types/product'
-import type { StoreResponse, ProductResponse, ShopProduct } from '@/types/shop'
-
-function mapStore(store: StoreResponse): FlowerStore {
+import type { ProductResponse, ShopProduct, StoreResponse } from '@/types/shop'
+import type { FlowerStore } from '@/types/store'
+import { resolveApiImage } from '@/utils/http'
+const mapStore = (store: StoreResponse): FlowerStore => {
   return {
     id: String(store.id),
     name: store.name,
@@ -17,13 +16,13 @@ function mapStore(store: StoreResponse): FlowerStore {
     stock: {},
   }
 }
-function mapProduct(product: ProductResponse): ShopProduct {
+const mapProduct = (product: ProductResponse): ShopProduct => {
   const specs = product.specs.map((spec) => ({
     ...spec,
     id: String(spec.id),
     price: spec.price / 100,
   }))
-  const first = specs[0]
+  const first = specs.find((spec) => spec.available > 0) ?? specs[0]
   const methods: Fulfillment[] = []
   if (product.pickupEnabled) methods.push('pickup')
   if (product.deliveryEnabled) methods.push('delivery')
@@ -44,23 +43,23 @@ function mapProduct(product: ProductResponse): ShopProduct {
     methods,
   }
 }
-export async function getStores() {
+export const getStores = async () => {
   const { data } = await getStoresApi()
   return data.map(mapStore)
 }
-export async function getStore(id: string) {
+export const getStore = async (id: string) => {
   const { data } = await getStoreApi(id)
   return mapStore(data)
 }
-export async function getProducts(storeId: string) {
+export const getProducts = async (storeId: string) => {
   const { data } = await getProductsApi(storeId)
   return data.map(mapProduct)
 }
-export async function getProduct(storeId: string, id: string) {
+export const getProduct = async (storeId: string, id: string) => {
   const { data } = await getProductApi(storeId, id)
   return mapProduct(data)
 }
-export async function getSelectedStore() {
+export const getSelectedStore = async () => {
   const stores = await getStores()
   const selectedId = String(uni.getStorageSync('flower-selected-store') || '')
   const store =

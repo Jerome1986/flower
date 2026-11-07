@@ -1,10 +1,10 @@
 import { request } from '@/utils/http'
-import type { UserInfo, WxLoginResponse } from '@/types/user'
+import type { UserInfo, WxLoginResponse, UpdateProfileInput } from '@/types/user'
 
-export const updateCurrentUserApi = (data: { nickname: string; age: number | null; gender: number }) =>
+export const updateCurrentUserApi = (data: UpdateProfileInput) =>
   request<UserInfo>({ method: 'PUT', url: '/user/me', data })
 
-// 获取当前用户信息。
+/** 获取当前用户信息。 */
 export const getCurrentUserApi = () => {
   return request<UserInfo>({
     method: 'GET',
@@ -12,7 +12,7 @@ export const getCurrentUserApi = () => {
   })
 }
 
-// 微信手机号登录。
+/** 微信手机号登录。 */
 export const wxLogin = (code: string, phoneCode: string, inviterCode: string) => {
   return request<WxLoginResponse>({
     method: 'POST',

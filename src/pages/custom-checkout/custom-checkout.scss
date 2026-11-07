@@ -2,11 +2,12 @@
 @use '../../uni.scss' as *;
 
 .summary-image {
-  width: 132rpx;
-  height: 132rpx;
+  width: 144rpx;
+  height: 144rpx;
   float: left;
   margin-right: 24rpx;
   border-radius: 16rpx;
+  margin-bottom: 16rpx;
 }
 .panel {
   overflow: hidden;
@@ -19,7 +20,9 @@
   margin-top: 8rpx;
   font-size: 30rpx;
   font-weight: 600;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .total-label {
   font-size: 22rpx;
@@ -29,11 +32,11 @@
   width: auto;
   min-width: 260rpx;
   flex-shrink: 0;
-  font-size: 25rpx;
+  font-size: 26rpx;
 }
 .checkout-page .remark-input {
   box-sizing: border-box;
-  padding: 20rpx;
+  padding: 24rpx;
   background: $qs-input-bg;
   border-radius: 16rpx;
   font-size: 26rpx;
@@ -42,10 +45,10 @@
   opacity: 0.5;
 }
 .checkout-page .panel > button {
-  margin-top: 20rpx;
+  margin-top: 24rpx;
   padding: 16rpx 24rpx;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   background: $qs-brandColor-light;
   border-radius: 16rpx;
-  font-size: 25rpx;
+  font-size: 26rpx;
 }

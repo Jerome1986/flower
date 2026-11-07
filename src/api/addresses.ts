@@ -1,7 +1,7 @@
 import { request } from '@/utils/http'
 import type { AddressInput, AddressResponse } from '@/types/address'
 
-// 获取收货地址列表。
+/** 获取收货地址列表。 */
 export const listAddressesApi = () => {
   return request<AddressResponse[]>({
     method: 'GET',
@@ -9,7 +9,7 @@ export const listAddressesApi = () => {
   })
 }
 
-// 新增收货地址。
+/** 新增收货地址。 */
 export const createAddressApi = (data: AddressInput) => {
   return request<AddressResponse>({
     method: 'POST',
@@ -18,7 +18,7 @@ export const createAddressApi = (data: AddressInput) => {
   })
 }
 
-// 更新收货地址。
+/** 更新收货地址。 */
 export const updateAddressApi = (id: string, data: AddressInput) => {
   return request<AddressResponse>({
     method: 'PUT',
@@ -27,7 +27,7 @@ export const updateAddressApi = (id: string, data: AddressInput) => {
   })
 }
 
-// 删除收货地址。
+/** 删除收货地址。 */
 export const deleteAddressApi = (id: string) => {
   return request<{ id: number }>({
     method: 'DELETE',
@@ -35,7 +35,7 @@ export const deleteAddressApi = (id: string) => {
   })
 }
 
-// 设置默认收货地址。
+/** 设置默认收货地址。 */
 export const setDefaultAddressApi = (id: string) => {
   return request<AddressResponse>({
     method: 'POST',

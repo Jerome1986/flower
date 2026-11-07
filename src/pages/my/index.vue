@@ -1,18 +1,16 @@
 <script setup lang="ts">
+import { getManagedStoresApi as getManagedStores } from '@/api/manage-orders'
+import { getCurrentUserApi as getCurrentUser } from '@/api/user'
+import { useResource } from '@/composables/use-resource'
+import { getSales } from '@/pages/store-stats/sales-summary'
+import { useUserStore } from '@/stores/modules/user'
 import { UserRole } from '@/types/user'
 import { resolveApiImage } from '@/utils/http'
 import { openAuthPage } from '@/utils/login-return'
-import { computed, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { getSales } from '@/pages/store-stats/sales-summary'
-import { getManagedStoresApi as getManagedStores } from '@/api/manage-orders'
-import { useResource } from '@/composables/use-resource'
-
 import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
-import { useUserStore } from '@/stores/modules/user'
+import { computed, watch } from 'vue'
 import { orderEntries, serviceEntries } from './page-data'
-import { getCurrentUserApi as getCurrentUser } from '@/api/user'
-
 // 当前账户信息与登录状态。
 const userStore = useUserStore()
 // 当前账户是否为店长，统一控制管理入口与用户订单区。
@@ -28,14 +26,7 @@ const todaySales = salesResource.data
 const salesMessage = computed(() => storeResource.message.value || salesResource.message.value)
 const salesLoading = computed(() => storeResource.loading.value || salesResource.loading.value)
 let profileVersion = 0
-watch(
-  () => userStore.token,
-  () => {
-    profileVersion++
-  },
-  { flush: 'sync' },
-)
-async function loadProfile() {
+const loadProfile = async () => {
   const version = ++profileVersion
   const token = userStore.token
   storeResource.reset()
@@ -52,41 +43,25 @@ async function loadProfile() {
     if (version === profileVersion) storeResource.message.value = '账户信息加载失败，请重试'
   }
 }
-onShow(loadProfile)
 // 打开门店销售统计。
-function openSales() {
+const openSales = () => {
   uni.navigateTo({ url: '/pages/store-stats/index' })
 }
-// 是否已保存登录账户。
-const isLoggedIn = computed(() => Boolean(userStore.token && userStore.profile))
-// 当前账户显示名称。
-const displayName = computed(() => userStore.profile?.nickname || '爱花的你')
-// 隐藏手机号中间四位。
-const phoneLabel = computed(() => {
-  // 账户绑定的手机号。
-  const phone = userStore.profile?.phone
-  return typeof phone === 'string' && /^\d{11}$/.test(phone)
-    ? `${phone.slice(0, 3)}****${phone.slice(-4)}`
-    : '愿每一天，都有鲜花相伴'
-})
-
 // 保留测试登录占位入口。
-function openTestLogin() {
+const openTestLogin = () => {
   console.log('测试登录')
 }
 // 打开当前店长绑定门店的订单管理。
-function openStoreOrders() {
+const openStoreOrders = () => {
   openAuthPage('/pages/store-orders/index')
 }
-
 // 打开我的订单并预选对应状态。
-function openOrders(status = 'all') {
+const openOrders = (status = 'all') => {
   if (isManager.value) return openStoreOrders()
   openAuthPage(`/pages/orders/index?status=${status}`)
 }
-
 // 统一处理账户、卡包、邀请、地址和客服入口。
-function openEntry(title: string) {
+const openEntry = (title: string) => {
   if (title === '微信手机号登录' || (title === '登录信息' && !isLoggedIn.value))
     return uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fmy%2Findex' })
   if (title === '登录信息') {
@@ -124,26 +99,56 @@ function openEntry(title: string) {
     confirmColor: '#eed261',
   })
 }
-
 // 展示花礼券的使用规则。
-function showRules() {
-  console.info('[待对接] 花礼券使用规则')
+const showRules = () => {
+  uni.showModal({
+    title: '花礼使用说明',
+    content:
+      '每笔订单可使用一张适用优惠券。现金券抵扣商品金额，兑换券用于指定商品及规格，配送费不参与抵扣。适用范围和有效期以券面及确认订单页为准。待付款订单会占用优惠券；取消或退款后是否已返还，请刷新卡包查看，原有效期不延长。',
+    showCancel: false,
+    confirmText: '知道了',
+  })
 }
-
 // 返回买花列表。
-function goShopping() {
+const goShopping = () => {
   uni.switchTab({ url: '/pages/order/index' })
 }
+watch(
+  () => userStore.token,
+  () => {
+    profileVersion++
+  },
+  { flush: 'sync' },
+)
+onShow(loadProfile)
+// 是否已保存登录账户。
+const isLoggedIn = computed(() => Boolean(userStore.token && userStore.profile))
+// 当前账户显示名称。
+const displayName = computed(() => userStore.profile?.nickname || '爱花的你')
+// 隐藏手机号中间四位。
+const phoneLabel = computed(() => {
+  // 账户绑定的手机号。
+  const phone = userStore.profile?.phone
+  return typeof phone === 'string' && /^\d{11}$/.test(phone)
+    ? `${phone.slice(0, 3)}****${phone.slice(-4)}`
+    : '愿每一天，都有鲜花相伴'
+})
 </script>
 
 <template>
   <view class="my-page">
-    <button class="test-login-float" @click="openTestLogin">测试登录</button>
+    <!-- 测试时取消下一行注释，恢复测试登录入口。 -->
+    <!-- <button class="test-login-float" @click="openTestLogin">测试登录</button> -->
     <view class="profile-section">
       <text class="eyebrow">一花一份心意</text>
       <view class="profile-row">
         <button class="avatar" aria-label="查看登录信息" @click="openEntry('登录信息')">
-          <image v-if="userStore.profile?.avatar" :src="resolveApiImage(userStore.profile.avatar)" mode="aspectFill" style="width: 100%; height: 100%; border-radius: 50%" />
+          <image
+            v-if="userStore.profile?.avatar"
+            :src="resolveApiImage(userStore.profile.avatar)"
+            mode="aspectFill"
+            style="width: 100%; height: 100%; border-radius: 50%"
+          />
           <text v-else class="iconfont icon-hua" />
         </button>
         <button class="profile-copy" @click="openEntry('登录信息')">
@@ -156,7 +161,7 @@ function goShopping() {
       </view>
       <view v-if="!isManager" class="account-entries">
         <button @click="openEntry('我的优惠券')">
-          <view class="account-icon"><UniIcons type="wallet" size="27" color="#eed261" /></view>
+          <view class="account-icon"><UniIcons type="wallet" size="27" color="#796315" /></view>
           <text class="entry-title">我的优惠券</text>
           <text class="muted">现金券 / 商品兑换券</text>
         </button>
@@ -173,7 +178,7 @@ function goShopping() {
         <text class="muted">{{ managerStore?.name || '门店' }}</text>
       </view>
       <button class="manager-entry" @click="openStoreOrders">
-        <view class="service-icon"><UniIcons type="shop" size="27" color="#eed261" /></view>
+        <view class="service-icon"><UniIcons type="shop" size="27" color="#796315" /></view>
         <view class="service-copy">
           <text class="entry-title">门店订单管理</text>
           <text class="muted">接单备货 · 自取核销 · 配送履约</text>
@@ -261,7 +266,7 @@ function goShopping() {
         class="service-row"
         @click="openEntry(entry.label)"
       >
-        <view class="service-icon"><UniIcons :type="entry.icon" size="23" color="#eed261" /></view>
+        <view class="service-icon"><UniIcons :type="entry.icon" size="23" color="#796315" /></view>
         <view class="service-copy">
           <text class="entry-title">{{ entry.label }}</text>
           <text class="muted">{{ entry.description }}</text>
@@ -269,7 +274,7 @@ function goShopping() {
         <text class="chevron iconfont icon-youjiantou1" />
       </button>
       <button class="service-row" @click="showRules">
-        <view class="service-icon"><UniIcons type="help" size="23" color="#eed261" /></view>
+        <view class="service-icon"><UniIcons type="help" size="23" color="#796315" /></view>
         <view class="service-copy">
           <text class="entry-title">花礼使用说明</text>
           <text class="muted">了解抵扣、兑换与有效期</text>

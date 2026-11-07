@@ -7,7 +7,7 @@ import type {
   OrderAction,
 } from '@/types/manage-orders'
 
-// 获取门店管理订单列表。
+/** 获取门店管理订单列表。 */
 export const getManageOrdersApi = (params: ManageOrdersParams) => {
   return request<ManageOrdersResponse>({
     method: 'GET',
@@ -16,7 +16,7 @@ export const getManageOrdersApi = (params: ManageOrdersParams) => {
   })
 }
 
-// 获取门店管理订单详情。
+/** 获取门店管理订单详情。 */
 export const getManageOrderApi = (orderNo: string) => {
   return request<OrderResponse>({
     method: 'GET',
@@ -24,7 +24,7 @@ export const getManageOrderApi = (orderNo: string) => {
   })
 }
 
-// 获取可管理门店列表。
+/** 获取可管理门店列表。 */
 export const getManagedStoresApi = () => {
   return request<ManagedStore[]>({
     method: 'GET',
@@ -32,7 +32,7 @@ export const getManagedStoresApi = () => {
   })
 }
 
-// 执行订单操作。
+/** 执行订单操作。 */
 export const performOrderActionApi = (orderNo: string, data: OrderAction) => {
   return request<OrderResponse>({
     method: 'POST',

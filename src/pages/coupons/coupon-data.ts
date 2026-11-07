@@ -1,12 +1,8 @@
-
 import type { Coupon } from '@/types/coupon'
 import { getNewUserCoupon } from './new-user-coupon'
-
 // 卡包与订单共用的本地演示券。
-
-
 // 读取演示券，并合并当前用户真实领取的模拟新人券。
-export function readCoupons(userId?: string): Coupon[] {
+export const readCoupons = (userId?: string): Coupon[] => {
   if (!userId) return []
   // 本地已初始化的演示卡包。
   let saved: Coupon[] = uni.getStorageSync(`flower-demo-coupons-${userId}`) || []
@@ -61,14 +57,13 @@ export function readCoupons(userId?: string): Coupon[] {
   const newcomer = userId ? getNewUserCoupon(userId) : null
   return [...(newcomer ? [newcomer] : []), ...saved.filter((coupon) => coupon.id !== 'new-user')]
 }
-
 // 按类型、商品规格、数量和有效期说明不可用原因。
-export function couponReason(
+export const couponReason = (
   coupon: Coupon,
   productId: string,
   specification: string,
   quantity: number,
-): string {
+): string => {
   if (coupon.status !== 'available') return '优惠券已使用或被占用'
   if (coupon.expiresAt <= Date.now()) return '优惠券已过期'
   if (
@@ -81,9 +76,8 @@ export function couponReason(
     return '购买数量不足兑换份数'
   return ''
 }
-
 // 模拟支付成功后将券标记为已使用。
-export function markCouponUsed(coupon: Coupon, userId?: string) {
+export const markCouponUsed = (coupon: Coupon, userId?: string) => {
   if (!userId) return
   if (userId && coupon.id === `new-user-${userId}`) {
     uni.setStorageSync(`flower-new-user-coupon-${userId}`, { ...coupon, status: 'used' })

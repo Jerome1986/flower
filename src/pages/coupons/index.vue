@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import type { CouponItem } from '@/types/coupon'
-import { computed, ref } from 'vue'
-import { onShow, onHide, onUnload } from '@dcloudio/uni-app'
-import { useUserStore } from '@/stores/modules/user'
 import { getUserCouponsApi } from '@/api/coupon'
-import { rememberCoupon } from './selection'
+import { useUserStore } from '@/stores/modules/user'
+import type { CouponItem } from '@/types/coupon'
+import { onHide, onShow, onUnload } from '@dcloudio/uni-app'
 import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
-
+import { computed, ref, watch } from 'vue'
+import { rememberCoupon } from './selection'
+// 根据到期时间计算可用券的展示状态。
+const getStatus = (coupon: CouponItem): CouponItem['status'] => {
+  return coupon.status === 'AVAILABLE' && new Date(coupon.expiresAt).getTime() <= now.value
+    ? 'EXPIRED'
+    : coupon.status
+}
 // 数据以当前账户的服务端响应为准。
 const userStore = useUserStore()
-
 // 当前卡包筛选状态。
 const activeTab = ref<CouponItem['status']>('AVAILABLE')
 // 卡包状态分类。
-const tabs: { id: CouponItem['status']; name: string }[] = [
+const tabs: {
+  id: CouponItem['status']
+  name: string
+}[] = [
   { id: 'AVAILABLE', name: '可用' },
   { id: 'LOCKED', name: '使用中' },
   { id: 'USED', name: '已使用' },
@@ -27,8 +34,23 @@ const loading = ref(false)
 const message = ref('')
 const sourceLabels = { NEW_USER: '新人注册奖励', INVITATION: '邀请奖励', MANUAL: '后台发放' }
 let requestId = 0
-
-async function loadCoupons() {
+watch(
+  () => userStore.token,
+  () => {
+    requestId++
+    coupons.value = []
+    loading.value = false
+    message.value = userStore.token ? '' : '请先登录'
+  },
+  { flush: 'sync' },
+)
+// 倒计时刷新定时器。
+let timer: ReturnType<typeof setInterval> | undefined
+// 当前分类显示的优惠券。
+const visibleCoupons = computed(() =>
+  coupons.value.filter((coupon) => getStatus(coupon) === activeTab.value),
+)
+const loadCoupons = async () => {
   const current = ++requestId
   const userId = userStore.profile?.id
   coupons.value = []
@@ -48,22 +70,35 @@ async function loadCoupons() {
     if (current === requestId) loading.value = false
   }
 }
-
-function login() {
+const login = () => {
   uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fcoupons%2Findex' })
 }
-// 倒计时刷新定时器。
-let timer: ReturnType<typeof setInterval> | undefined
-// 当前分类显示的优惠券。
-const visibleCoupons = computed(() =>
-  coupons.value.filter((coupon) => getStatus(coupon) === activeTab.value),
-)
-
-// 根据到期时间计算可用券的展示状态。
-function getStatus(coupon: CouponItem): CouponItem['status'] {
-  return coupon.status === 'AVAILABLE' && new Date(coupon.expiresAt).getTime() <= now.value
-    ? 'EXPIRED'
-    : coupon.status
+// 清理倒计时定时器。
+const stopTimer = () => {
+  if (timer) clearInterval(timer)
+  timer = undefined
+}
+// 切换卡包状态分类。
+const changeTab = (status: CouponItem['status']) => {
+  activeTab.value = status
+}
+// 格式化优惠券到期时间。
+const formatExpiry = (timestamp: string) => {
+  return new Date(timestamp).toLocaleString('zh-CN', { hour12: false })
+}
+// 将剩余有效时间展示为天、小时、分钟、秒。
+const countdown = (timestamp: string) => {
+  // 距到期剩余的秒数。
+  const seconds = Math.max(0, Math.floor((new Date(timestamp).getTime() - now.value) / 1000))
+  return `${Math.floor(seconds / 86400)}天 ${Math.floor(seconds / 3600) % 24}时 ${
+    Math.floor(seconds / 60) % 60
+  }分 ${seconds % 60}秒`
+}
+// 前往下单页挑选适用鲜花，实际券选择在确认订单页完成。
+const useCoupon = (coupon: CouponItem) => {
+  if (getStatus(coupon) !== 'AVAILABLE' || !userStore.profile) return
+  rememberCoupon(userStore.profile.id, coupon.id)
+  uni.switchTab({ url: '/pages/order/index' })
 }
 // 启动前台倒计时。
 onShow(() => {
@@ -85,34 +120,6 @@ onUnload(() => {
   stopTimer()
   requestId++
 })
-
-// 清理倒计时定时器。
-function stopTimer() {
-  if (timer) clearInterval(timer)
-  timer = undefined
-}
-// 切换卡包状态分类。
-function changeTab(status: CouponItem['status']) {
-  activeTab.value = status
-}
-// 格式化优惠券到期时间。
-function formatExpiry(timestamp: string) {
-  return new Date(timestamp).toLocaleString('zh-CN', { hour12: false })
-}
-// 将剩余有效时间展示为天、小时、分钟、秒。
-function countdown(timestamp: string) {
-  // 距到期剩余的秒数。
-  const seconds = Math.max(0, Math.floor((new Date(timestamp).getTime() - now.value) / 1000))
-  return `${Math.floor(seconds / 86400)}天 ${Math.floor(seconds / 3600) % 24}时 ${
-    Math.floor(seconds / 60) % 60
-  }分 ${seconds % 60}秒`
-}
-// 前往下单页挑选适用鲜花，实际券选择在确认订单页完成。
-function useCoupon(coupon: CouponItem) {
-  if (getStatus(coupon) !== 'AVAILABLE' || !userStore.profile) return
-  rememberCoupon(userStore.profile.id, coupon.id)
-  uni.switchTab({ url: '/pages/order/index' })
-}
 </script>
 
 <template>
@@ -199,5 +206,5 @@ function useCoupon(coupon: CouponItem) {
 </template>
 
 <style lang="scss" scoped>
-@use './coupons.scss';
+@use './coupons.scss' as page;
 </style>

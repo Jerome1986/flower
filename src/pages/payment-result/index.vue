@@ -1,18 +1,38 @@
 <script setup lang="ts">
+import OrderProducts from '@/components/order-products.vue'
 import { useResource } from '@/composables/use-resource'
-import type { PreviewOrder } from '@/types/order'
-import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-
-import { useUserStore } from '@/stores/modules/user'
-import { orderStatus, orderHint, orderTitle, orderPaymentLabel } from '@/pages/orders/order-display'
 import { getOrder } from '@/pages/orders/order-data'
-
+import { orderHint, orderPaymentLabel, orderStatus, orderTitle } from '@/pages/orders/order-display'
+import { useUserStore } from '@/stores/modules/user'
+import { onHide, onLoad, onShow, onUnload } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 // 数据以当前账户的服务端响应为准。
 // 支付结果只展示当前用户自己的订单。
 const userStore = useUserStore()
 const orderNo = ref('')
-
+const loadOrder = async () => {
+  await resource.load()
+  if (order.value?.paymentStatus !== 'PENDING') stopPolling()
+}
+// 返回下单页继续挑选鲜花。
+const goShopping = () => {
+  if (order.value?.type === 'custom') return uni.redirectTo({ url: '/pages/bouquets/index' })
+  uni.switchTab({ url: '/pages/order/index' })
+}
+// 返回首页查看其他鲜花和活动。
+const goHome = () => {
+  uni.switchTab({ url: '/pages/index/index' })
+}
+// 打开当前订单的详情。
+const viewOrder = () => {
+  if (order.value)
+    uni.navigateTo({ url: `/pages/order-detail/index?orderNo=${order.value.orderNo}` })
+}
+const stopPolling = () => {
+  pollingVersion++
+  if (timer) clearInterval(timer)
+  timer = undefined
+}
 onLoad((options) => {
   orderNo.value = options?.orderNo || ''
 })
@@ -23,57 +43,56 @@ const resource = useResource(() => {
 const order = computed(() => resource.data.value || null)
 const loading = resource.loading
 const failed = computed(() => Boolean(resource.message.value))
-async function loadOrder() {
-  await resource.load()
-}
-
-// 从服务端读取已创建订单，当前未接入在线支付。
+let timer: ReturnType<typeof setInterval> | undefined
+let attempts = 0
+let pollingVersion = 0
+// 从服务端读取订单状态，不将客户端支付成功回调直接视为服务端已收款。
 onShow(() => {
-  void loadOrder()
+  stopPolling()
+  const version = pollingVersion
+  attempts = 0
+  const token = userStore.token
+  void loadOrder().then(() => {
+    if (
+      version !== pollingVersion ||
+      token !== userStore.token ||
+      order.value?.paymentStatus !== 'PENDING'
+    )
+      return
+    timer = setInterval(() => {
+      if (resource.loading.value) return
+      if (++attempts >= 6 || token !== userStore.token) return stopPolling()
+      void loadOrder()
+    }, 2500)
+  })
 })
-// 返回下单页继续挑选鲜花。
-function goShopping() {
-  if (order.value?.type === 'custom') return uni.redirectTo({ url: '/pages/bouquets/index' })
-  uni.switchTab({ url: '/pages/order/index' })
-}
-// 返回首页查看其他鲜花和活动。
-function goHome() {
-  uni.switchTab({ url: '/pages/index/index' })
-}
-// 打开当前订单的详情。
-function viewOrder() {
-  if (order.value)
-    uni.navigateTo({ url: `/pages/order-detail/index?orderNo=${order.value.orderNo}` })
-}
+onUnload(stopPolling)
+onHide(stopPolling)
 </script>
 
 <template>
   <view v-if="order" class="result-page">
-    <view class="success-section">
-      <view class="success-icon"><UniIcons type="checkmarkempty" size="38" color="#eed261" /></view>
-      <text class="success-title">{{
-        order.status === 'unpaid' ? '下单成功' : orderTitle(order)
-      }}</text>
-      <text class="success-copy"> 订单已保存，可在我的订单中查看 </text>
-      <text class="amount">
-        <text class="currency">¥</text>
-        {{ order.total.toFixed(2) }}
-      </text>
-      <text class="amount-label">订单金额 · {{ orderPaymentLabel(order) }}</text>
-    </view>
-    <view class="panel">
-      <view class="panel-heading">
-        <text class="section-title">这份鲜花已下单</text>
-        <text class="status-tag">{{ orderStatus(order) }}</text>
-      </view>
-      <view class="product-row">
-        <image :src="order.image" mode="aspectFill" />
-        <view class="product-copy">
-          <text class="product-name">{{ order.productName }}</text>
-          <text class="muted">{{ order.specification }} / {{ order.unit }}</text>
-          <text class="muted">数量 {{ order.quantity }} {{ order.unit }}</text>
+    <view class="panel order-panel">
+      <view class="success-section">
+        <view class="panel-heading">
+          <text class="success-title">{{ orderTitle(order) }}</text>
+          <text class="status-tag">{{ orderStatus(order) }}</text>
         </view>
+        <text class="success-copy">{{
+          order.paymentStatus === 'PENDING'
+            ? '正在确认支付结果；稍后可刷新或查看订单继续支付'
+            : '订单已保存，可在我的订单中查看'
+        }}</text>
+        <button v-if="order.paymentStatus === 'PENDING'" :disabled="loading" @click="loadOrder">
+          刷新支付结果
+        </button>
+        <text class="amount">
+          <text class="currency">¥</text>
+          {{ order.total.toFixed(2) }}
+        </text>
+        <text class="amount-label">订单金额 · {{ orderPaymentLabel(order) }}</text>
       </view>
+      <OrderProducts :order="order" />
       <view class="info-row">
         <text>订单编号</text>
         <text class="info-value">{{ order.orderNo }}</text>
@@ -117,5 +136,5 @@ function viewOrder() {
 </template>
 
 <style lang="scss" scoped>
-@use './result.scss';
+@use './result.scss' as page;
 </style>

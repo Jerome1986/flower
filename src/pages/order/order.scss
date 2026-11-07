@@ -20,7 +20,7 @@
 }
 .store-card {
   flex-shrink: 0;
-  padding: 28rpx $qs-page-spacing;
+  padding: 24rpx $qs-page-spacing;
   background: $qs-card-bg;
 }
 .store-name {
@@ -49,16 +49,19 @@
   .iconfont {
     font-size: 24rpx;
   }
+  flex: 1;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 .method-tabs {
   flex-shrink: 0;
-  margin-left: 12rpx;
-  padding: 5rpx;
-  border-radius: 40rpx;
+  margin-left: 16rpx;
+  padding: 4rpx;
+  border-radius: 16rpx;
   background: $qs-input-bg;
   button {
-    padding: 10rpx 20rpx;
-    border-radius: 32rpx;
+    padding: 8rpx 24rpx;
+    border-radius: 16rpx;
     font-size: 24rpx;
     &.active {
       background: $qs-brandColor;
@@ -80,22 +83,27 @@
   padding: 12rpx 16rpx;
   border-radius: 12rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 22rpx;
 }
 .notice-copy {
   flex: 1;
 }
 .order-page .notice-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 40rpx;
   font-size: 30rpx;
   text-align: center;
+  min-height: 56rpx;
 }
 .order-page .store-details {
   width: 100%;
   padding: 24rpx 0;
   color: $qs-font-dec;
-  font-size: 23rpx;
+  font-size: 24rpx;
 }
 .store-info {
   padding: 0 0 24rpx;
@@ -116,7 +124,7 @@
 }
 .category-list {
   flex: none;
-  width: 174rpx;
+  width: 144rpx;
   background: $qs-pageBackGroundColor;
 }
 .order-page .category-item {
@@ -124,12 +132,12 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 110rpx;
-  padding: 24rpx 20rpx;
-  font-size: 25rpx;
+  min-height: 96rpx;
+  padding: 24rpx 16rpx;
+  font-size: 26rpx;
   &.selected {
     background: $qs-card-bg;
-    color: $qs-brandColor;
+    color: $qs-accent-text;
     font-weight: 600;
     &::before {
       position: absolute;
@@ -142,13 +150,14 @@
       content: '';
     }
   }
+  overflow-wrap: anywhere;
 }
 .product-list {
   min-width: 0;
   background: $qs-card-bg;
 }
 .product-heading {
-  padding: 24rpx 0 8rpx 20rpx;
+  padding: 24rpx 0 8rpx 16rpx;
 }
 .heading-title {
   color: $qs-font-title;
@@ -157,62 +166,65 @@
 }
 .muted {
   display: block;
-  margin-top: 6rpx;
+  margin-top: 8rpx;
   color: $qs-font-dec;
-  font-size: 21rpx;
+  font-size: 22rpx;
 }
 .product-card {
   display: flex;
-  gap: 18rpx;
-  margin: 16rpx 0 16rpx 20rpx;
-  padding: 12rpx;
+  gap: 16rpx;
+  margin: 16rpx 0 16rpx 16rpx;
+  padding: 16rpx;
   border: 1rpx solid $qs-divider;
-  border-radius: 20rpx;
-  background: $qs-pageBackGroundColor;
+  border-radius: 16rpx;
+  background: $qs-card-bg;
 }
 .product-image {
   flex-shrink: 0;
-  width: 170rpx;
-  height: 190rpx;
-  border-radius: 14rpx;
+  width: 140rpx;
+  height: 168rpx;
+  border-radius: 12rpx;
 }
 .product-body {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  padding: 6rpx 0;
+  padding: 8rpx 0;
 }
 .order-page .product-name {
   color: $qs-font-title;
-  font-size: 27rpx;
-  font-weight: 600;
+  font-size: 28rpx;
+  font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .product-description {
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   color: $qs-font-dec;
-  font-size: 20rpx;
+  font-size: 22rpx;
   line-height: 1.6;
 }
 .product-bottom {
   gap: 8rpx;
+  flex-wrap: wrap;
   margin-top: auto;
   padding-top: 12rpx;
 }
 .price {
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-size: 32rpx;
   font-weight: 600;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .currency {
   margin-right: 3rpx;
-  font-size: 21rpx;
+  font-size: 22rpx;
 }
 .price-suffix {
   margin-left: 5rpx;
   color: $qs-font-dec2;
-  font-size: 19rpx;
+  font-size: 22rpx;
   font-weight: 400;
 }
 .order-page .add-button {
@@ -220,11 +232,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 48rpx;
-  height: 48rpx;
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   line-height: 1;
   .iconfont {
     display: flex;
@@ -237,10 +249,10 @@
   }
 }
 .list-footer {
-  padding: 24rpx 12rpx calc(28rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 12rpx calc(32rpx + env(safe-area-inset-bottom));
   color: $qs-font-dec2;
   text-align: center;
-  font-size: 21rpx;
+  font-size: 22rpx;
   line-height: 1.8;
   text {
     display: block;

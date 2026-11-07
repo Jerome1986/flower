@@ -1,4 +1,4 @@
-﻿import { getSalesApi } from '@/api/sales'
+import { getSalesApi } from '@/api/sales'
 import type { SalesQuery, SalesSummary } from '@/types/sales'
 const statusLabels: Record<string, string> = {
   PENDING_PAYMENT: '待付款',
@@ -13,7 +13,7 @@ const statusLabels: Record<string, string> = {
   CANCELLED: '已取消',
   CLOSED: '已关闭',
 }
-export async function getSales(query: SalesQuery): Promise<SalesSummary> {
+export const getSales = async (query: SalesQuery): Promise<SalesSummary> => {
   if (
     !Number.isSafeInteger(query.storeId) ||
     query.storeId < 1 ||

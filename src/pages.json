@@ -22,7 +22,15 @@
 		},
 		{
 			"path": "pages/checkout/index",
+			"style": { "navigationBarTitleText": "确认选购" }
+		},
+		{
+			"path": "pages/order-confirm/index",
 			"style": { "navigationBarTitleText": "确认订单" }
+		},
+		{
+			"path": "pages/cart/index",
+			"style": { "navigationBarTitleText": "购物车" }
 		},
 		{
 			"path": "pages/payment-result/index",
@@ -124,6 +132,12 @@
 				"text": "下单",
 				"iconPath": "static/tabar-icon/diandan.png",
 				"selectedIconPath": "static/tabar-icon/diandan-selected.png"
+			},
+			{
+				"pagePath": "pages/cart/index",
+				"text": "购物车",
+				"iconPath": "static/tabar-icon/cart.png",
+				"selectedIconPath": "static/tabar-icon/cart_selected.png"
 			},
 			{
 				"pagePath": "pages/my/index",

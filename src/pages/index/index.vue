@@ -1,21 +1,29 @@
 <script setup lang="ts">
-import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
-import { getSelectedStore, getProducts } from '@/pages/stores/shop-data'
-import type { ShopProduct } from '@/types/shop'
-import { computed } from 'vue'
-import { useUserStore } from '@/stores/modules/user'
 import {
-  getNewcomerGiftApi as getNewcomerGift,
   claimNewcomerGiftApi as claimNewcomerGift,
+  getNewcomerGiftApi as getNewcomerGift,
 } from '@/api/marketing'
-import { rememberInvitation } from '@/pages/invite/invitation-actions'
 import { useResource } from '@/composables/use-resource'
+import { rememberInvitation } from '@/pages/invite/invitation-actions'
+import { getProducts, getSelectedStore } from '@/pages/stores/shop-data'
+import { useUserStore } from '@/stores/modules/user'
+import type { ShopProduct } from '@/types/shop'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ref } from 'vue'
+import UniIcons from '@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue'
+import { computed, ref } from 'vue'
+// 查询花礼状态，提取请求工具包装中的业务数据。
+const loadNewcomerGift = async () => {
+  // 1. 请求当前账户的服务端状态，不使用本地模拟券。
+  const res = await getNewcomerGift()
+  // 2. 返回业务数据，交由资源工具处理账户隔离和加载状态。
+  return res.data
+}
 const recommended = ref<ShopProduct[]>([])
 const recommendationStoreId = ref('')
 let recommendationVersion = 0
-async function loadRecommendations() {
+// 数据以当前账户的服务端响应为准。
+const userStore = useUserStore()
+const loadRecommendations = async () => {
   const version = ++recommendationVersion
   recommended.value = []
   recommendationStoreId.value = ''
@@ -26,53 +34,14 @@ async function loadRecommendations() {
     recommendationStoreId.value = store?.id || ''
     recommended.value = products.slice(0, 8)
   } catch {
-    /* 请求工具展示错误，推荐区域不回退模拟商品。 */
+    // 请求工具展示错误，推荐区不回退到模拟商品。
   }
 }
-
-// 数据以当前账户的服务端响应为准。
-const userStore = useUserStore()
-// 分享落地仅记录来源，有效性与奖励由后端判定。
-onLoad((options) => {
-  rememberInvitation(options?.inviteCode)
-})
-// 查询花礼状态，提取请求工具包装中的业务数据。
-async function loadNewcomerGift() {
-  // 1. 请求当前账户的服务端状态，不使用本地模拟券。
-  const res = await getNewcomerGift()
-  // 2. 返回业务数据，交由资源工具处理账户隔离和加载状态。
-  return res.data
-}
-const giftResource = useResource(loadNewcomerGift)
-const gift = giftResource.data
-const claiming = ref(false)
-// 展示已领券状态或服务端返回的不可领取原因。
-const giftDescription = computed(() => {
-  // 1. 已领券优先展示使用状态，过期和已使用也不能重复领取。
-  if (gift.value?.coupon) {
-    const labels = { AVAILABLE: '已领取，可前往花礼券查看', LOCKED: '花礼券使用中', USED: '花礼券已使用', EXPIRED: '花礼券已过期' }
-    return labels[gift.value.coupon.status]
-  }
-  // 2. 可领取时展示提示，否则沿用后端的具体原因。
-  return gift.value?.canClaim ? '新人花礼待领取，领取后开始计算有效期' : gift.value?.reason
-})
-const couponButtonLabel = computed(() =>
-  gift.value?.coupon
-    ? '查看新人花礼'
-    : gift.value?.canClaim
-    ? '领取新人花礼'
-    : gift.value
-    ? '暂无可领取花礼'
-    : '领取新人花礼',
-)
-onShow(() => {
-  void loadRecommendations()
-  if (!claiming.value) void giftResource.load()
-})
 // 登录后主动领取新人花礼，已领取时打开卡包。
-async function claimNewUserCoupon() {
+const claimNewUserCoupon = async () => {
   // 1. 未登录先进入登录页，加载或领取期间阻止重复点击。
-  if (!userStore.token) return uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fcoupons%2Findex' })
+  if (!userStore.token)
+    return uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Fcoupons%2Findex' })
   if (claiming.value || giftResource.loading.value) return
   // 2. 状态尚未获取时重新查询，已有券直接查看，不能领取时不发请求。
   if (!gift.value) return giftResource.load()
@@ -95,46 +64,75 @@ async function claimNewUserCoupon() {
     claiming.value = false
   }
 }
-
 // 打开买花列表并预设收花方式。
-function goShopping(method: 'pickup' | 'delivery' = 'pickup') {
+const goShopping = (method: 'pickup' | 'delivery' = 'pickup') => {
   uni.setStorageSync('flower-entry-method', method)
   uni.switchTab({ url: '/pages/order/index' })
 }
-
 // 打开首页推荐商品的详情页。
-function viewProduct(id: string) {
+const viewProduct = (id: string) => {
   uni.navigateTo({ url: `/pages/product/index?id=${id}&storeId=${recommendationStoreId.value}` })
 }
-
 // 打开邀请好友活动页。
-function goInvite() {
+const goInvite = () => {
   uni.navigateTo({ url: '/pages/invite/index' })
 }
-
-function goMember() {
+const goMember = () => {
   uni.switchTab({ url: '/pages/my/index' })
 }
-
-function goOrders() {
+const goOrders = () => {
   uni.navigateTo({ url: '/pages/orders/index' })
 }
-
 // 打开平台成品花束专区。
-function goBouquets() {
+const goBouquets = () => {
   uni.navigateTo({ url: '/pages/bouquets/index' })
 }
-
 // 统一展示价格格式。
-function formatPrice(amount: number) {
+const formatPrice = (amount: number) => {
   return amount.toFixed(2)
 }
+// 分享落地仅记录来源，有效性与奖励由后端判定。
+onLoad((options) => {
+  rememberInvitation(options?.inviteCode)
+})
+const giftResource = useResource(loadNewcomerGift)
+const gift = giftResource.data
+const claiming = ref(false)
+// 展示已领券状态或服务端返回的不可领取原因。
+const giftDescription = computed(() => {
+  // 1. 已领券优先展示使用状态，过期和已使用也不能重复领取。
+  if (gift.value?.coupon) {
+    const labels = {
+      AVAILABLE: '已领取，可前往花礼券查看',
+      LOCKED: '花礼券使用中',
+      USED: '花礼券已使用',
+      EXPIRED: '花礼券已过期',
+    }
+    return labels[gift.value.coupon.status]
+  }
+  // 2. 可领取时展示提示，否则沿用后端的具体原因。
+  return gift.value?.canClaim ? '新人花礼待领取，领取后开始计算有效期' : gift.value?.reason
+})
+const couponButtonLabel = computed(() =>
+  gift.value?.coupon
+    ? '查看新人花礼'
+    : gift.value?.canClaim
+    ? '领取新人花礼'
+    : gift.value
+    ? '暂无可领取花礼'
+    : '领取新人花礼',
+)
+onShow(() => {
+  void loadRecommendations()
+  if (!claiming.value) void giftResource.load()
+})
 </script>
 
 <template>
   <view class="home">
     <view class="hero">
-      <image class="hero__image" src="/static/home/home-background.jpg" mode="aspectFill" />
+      <!-- 品牌主图按原比例完整展示，不裁切花束与飘带。 -->
+      <image class="hero__image" src="/static/home/home-background.jpg" mode="widthFix" />
     </view>
     <view class="fulfillment-card">
       <view class="fulfillment-card__header">
@@ -161,7 +159,7 @@ function formatPrice(amount: number) {
     </view>
     <button class="order-bar" @click="goOrders">
       <view class="order-bar__title"
-        ><UniIcons type="list" size="20" color="#ffffff" /><text>订单中心</text></view
+        ><UniIcons type="list" size="20" color="#796315" /><text>订单中心</text></view
       >
       <view class="order-bar__hint"
         ><text>新零售鲜花配送到家</text><text class="iconfont icon-youjiantou1"
@@ -197,7 +195,11 @@ function formatPrice(amount: number) {
       </view>
       <button
         class="round-action"
-        :disabled="claiming || giftResource.loading.value || (!!userStore.token && !!gift && !gift.coupon && !gift.canClaim)"
+        :disabled="
+          claiming ||
+          giftResource.loading.value ||
+          (!!userStore.token && !!gift && !gift.coupon && !gift.canClaim)
+        "
         :aria-label="couponButtonLabel"
         @click="claimNewUserCoupon"
       >
@@ -248,5 +250,5 @@ function formatPrice(amount: number) {
 </template>
 
 <style lang="scss" scoped>
-@use './home.scss';
+@use './home.scss' as *;
 </style>

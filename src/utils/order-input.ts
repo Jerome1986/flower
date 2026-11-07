@@ -1,10 +1,10 @@
-export function positiveId(value: string) {
+export const positiveId = (value: string) => {
   return /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value))
 }
-export function positiveQuantity(value: number) {
+export const positiveQuantity = (value: number) => {
   return Number.isSafeInteger(value) && value > 0
 }
-export function makeRequestKey() {
+export const makeRequestKey = () => {
   return (
     'order-' +
     Date.now() +

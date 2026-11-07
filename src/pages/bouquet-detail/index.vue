@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { openAuthPage } from '@/utils/login-return'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { useResource } from '@/composables/use-resource'
 import { getBouquet } from '@/pages/bouquets/bouquet-data'
 import { customCheckoutEnabled } from '@/pages/custom-checkout/bouquet-checkout'
-import { useResource } from '@/composables/use-resource'
+import { openAuthPage } from '@/utils/login-return'
+import { positiveId, positiveQuantity } from '@/utils/order-input'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { computed, ref } from 'vue'
 const bouquetId = ref('')
 const quantity = ref(1)
 const specId = ref('')
@@ -14,6 +15,7 @@ const loading = resource.loading
 const message = resource.message
 const pending = resource.pending
 const selectedSpec = computed(() => bouquet.value?.specs.find((item) => item.id === specId.value))
+const maxQuantity = computed(() => Math.max(1, Math.min(999, bouquet.value?.maxQuantity || 1)))
 const subtotal = computed(() => (selectedSpec.value?.price || 0) * quantity.value)
 const detailImages = computed(() =>
   bouquet.value?.images.length ? bouquet.value.images : bouquet.value ? [bouquet.value.image] : [],
@@ -21,39 +23,37 @@ const detailImages = computed(() =>
 const canBuy = computed(
   () =>
     customCheckoutEnabled &&
-    Boolean(
-      selectedSpec.value &&
-        quantity.value >= 1 &&
-        quantity.value <= (bouquet.value?.maxQuantity || 1),
-    ),
+    !loading.value &&
+    positiveId(bouquetId.value) &&
+    positiveId(specId.value) &&
+    positiveQuantity(quantity.value) &&
+    Boolean(selectedSpec.value && quantity.value >= 1 && quantity.value <= maxQuantity.value),
 )
-onLoad((options) => {
-  bouquetId.value = options?.id || ''
-})
-async function load() {
-  if (!bouquetId.value) {
+const load = async () => {
+  if (!positiveId(bouquetId.value)) {
     resource.message.value = '花束参数不完整'
     return
   }
   await resource.load()
   if (!bouquet.value?.specs.some((item) => item.id === specId.value))
     specId.value = bouquet.value?.specs[0]?.id || ''
+  quantity.value = Math.min(quantity.value, maxQuantity.value)
 }
-onShow(load)
-function decreaseQuantity() {
+const decreaseQuantity = () => {
   quantity.value = Math.max(1, quantity.value - 1)
 }
-function increaseQuantity() {
-  quantity.value = Math.min(bouquet.value?.maxQuantity || 1, quantity.value + 1)
+const increaseQuantity = () => {
+  quantity.value = Math.min(maxQuantity.value, quantity.value + 1)
 }
-function chooseSpec(id: string) {
+const chooseSpec = (id: string) => {
+  if (!bouquet.value?.specs.some((item) => item.id === id)) return
   specId.value = id
   quantity.value = 1
 }
-function buyNow() {
+const buyNow = () => {
   if (!canBuy.value) return
   openAuthPage(
-      '/pages/custom-checkout/index?id=' +
+    '/pages/custom-checkout/index?id=' +
       encodeURIComponent(bouquetId.value) +
       '&specId=' +
       encodeURIComponent(specId.value) +
@@ -61,9 +61,14 @@ function buyNow() {
       quantity.value,
   )
 }
-function goBouquets() {
+const goBouquets = () => {
   uni.redirectTo({ url: '/pages/bouquets/index' })
 }
+onLoad((options) => {
+  bouquetId.value = options?.id || ''
+  if (options?.specId && positiveId(options.specId)) specId.value = options.specId
+})
+onShow(load)
 </script>
 
 <template>
@@ -105,7 +110,7 @@ function goBouquets() {
         <view class="quantity-row">
           <view>
             <text class="field-label">购买数量</text>
-            <text class="hint">固定成品款式 · 每单最多 {{ bouquet.maxQuantity }} 束</text>
+            <text class="hint">固定成品款式 · 每单最多 {{ maxQuantity }} 束</text>
           </view>
           <view class="stepper">
             <button
@@ -119,7 +124,7 @@ function goBouquets() {
             <text class="quantity-value">{{ quantity }}</text>
             <button
               class="stepper-button"
-              :disabled="quantity >= (bouquet.maxQuantity || 1)"
+              :disabled="quantity >= maxQuantity"
               aria-label="增加数量"
               @click="increaseQuantity"
             >
@@ -164,7 +169,7 @@ function goBouquets() {
         <text class="section-title">送花小贴士</text>
         <text class="tips">本款为固定成品花束，暂不支持自由搭配花材或在线改款。</text>
         <text class="tips">鲜花为自然生长，花型与颜色可能略有差异，请以实际商品为准。</text>
-        <text class="tips"> 当前花束订单暂不支持使用优惠券。 </text>
+        <text class="tips"> 可用优惠券以结算页为准，优惠仅抵商品金额，不抵配送费。 </text>
       </view>
       <text class="demo-note">{{ '配送费用以订单报价为准' }}</text>
     </view>
@@ -189,5 +194,5 @@ function goBouquets() {
 </template>
 
 <style lang="scss" scoped>
-@use './bouquet-detail.scss';
+@use './bouquet-detail.scss' as page;
 </style>

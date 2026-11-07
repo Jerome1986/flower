@@ -13,6 +13,11 @@ scroll-view {
 }
 
 
+button {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
 button::after {
   border: none;
 }

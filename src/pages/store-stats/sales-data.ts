@@ -1,12 +1,9 @@
-
 import type { PreviewOrder } from '@/types/order'
 import type { SalesPeriod } from '@/types/report'
 export { readOrders as readSalesOrders } from '../../pages/orders/preview-orders'
-
 // 销售统计支持的时间范围。
-
 // 兼容本地中文日期和新增核销时间的标准格式。
-function orderTime(value: string) {
+const orderTime = (value: string) => {
   return new Date(
     value.includes('T')
       ? value
@@ -14,12 +11,12 @@ function orderTime(value: string) {
   ).getTime()
 }
 // 按本店和自然日筛选，销售额不包含配送费。
-export function summarizeSales(
+export const summarizeSales = (
   orders: PreviewOrder[],
   storeId: string,
   period: SalesPeriod,
   now = new Date(),
-) {
+) => {
   // 当前日期零点。
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   // 所选范围起始时间。

@@ -6,18 +6,20 @@
   gap: 24rpx;
   margin-top: 12rpx;
   button {
-    padding: 6rpx 16rpx;
+    padding: 8rpx 16rpx;
     border: 1rpx solid $qs-border;
     border-radius: 24rpx;
-    color: $qs-brandColor;
+    color: $qs-accent-text;
     font-size: 22rpx;
   }
 }
 .pickup-code {
   font-size: 44rpx;
   font-weight: 600;
-  letter-spacing: 6rpx;
-  color: $qs-brandColor;
+  letter-spacing: 4rpx;
+  color: $qs-accent-text;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .progress-step.current {
   font-weight: 600;
@@ -29,11 +31,15 @@
   background: $qs-border;
 }
 
-// 订单详情沿用品牌绿色、圆角卡片和统一间距。
+// 订单详情沿用品牌暖黄主题、圆角卡片和统一间距。
 .detail-page {
-  padding: 28rpx $qs-page-spacing calc(160rpx + env(safe-area-inset-bottom));
+  padding: 32rpx $qs-page-spacing calc(160rpx + env(safe-area-inset-bottom));
   color: $qs-font-body;
   button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     margin: 0;
     padding: 0;
     background: transparent;
@@ -43,17 +49,21 @@
   }
 }
 .status-section {
-  padding: 8rpx 4rpx 20rpx;
+  padding: 32rpx;
+  border: 1rpx solid $qs-divider;
+  border-radius: 24rpx;
+  background: $qs-brandColor-light;
+  border-color: #eee4be;
 }
 .eyebrow {
   display: block;
-  color: $qs-brandColor;
-  font-size: 21rpx;
-  letter-spacing: 2rpx;
+  color: $qs-accent-text;
+  font-size: 22rpx;
+  letter-spacing: 0;
 }
 .status-title {
   display: block;
-  margin-top: 14rpx;
+  margin-top: 16rpx;
   font-size: 38rpx;
   color: $qs-font-title;
   font-weight: 600;
@@ -62,12 +72,12 @@
   display: block;
   margin-top: 12rpx;
   color: $qs-font-dec;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.8;
 }
 .progress {
   display: flex;
-  margin-top: 28rpx;
+  margin-top: 32rpx;
 }
 .progress-step {
   position: relative;
@@ -75,9 +85,9 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: 14rpx;
+  gap: 16rpx;
   color: $qs-font-dec;
-  font-size: 21rpx;
+  font-size: 22rpx;
   &::after {
     position: absolute;
     top: 9rpx;
@@ -91,7 +101,7 @@
     display: none;
   }
   &.active {
-    color: $qs-brandColor;
+    color: $qs-accent-text;
     .progress-dot {
       background: $qs-brandColor;
     }
@@ -106,24 +116,24 @@
 .pickup-note {
   display: flex;
   align-items: center;
-  gap: 18rpx;
-  margin-top: 20rpx;
+  gap: 16rpx;
+  margin-top: 24rpx;
   padding: 24rpx;
   border-radius: 20rpx;
   background: $qs-brandColor-light;
   .iconfont {
     flex: none;
     font-size: 42rpx;
-    color: $qs-brandColor;
+    color: $qs-accent-text;
   }
 }
 .note-title {
-  color: $qs-brandColor;
-  font-size: 25rpx;
+  color: $qs-accent-text;
+  font-size: 26rpx;
 }
 .panel {
-  margin-top: 20rpx;
-  padding: 28rpx;
+  margin-top: 24rpx;
+  padding: 32rpx;
   border: 1rpx solid $qs-divider;
   border-radius: 24rpx;
   background: $qs-card-bg;
@@ -134,44 +144,44 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 .section-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: $qs-font-title;
 }
 .tag {
-  padding: 6rpx 12rpx;
+  padding: 8rpx 12rpx;
   border-radius: 10rpx;
   background: $qs-brandColor-light;
-  color: $qs-brandColor;
-  font-size: 21rpx;
+  color: $qs-accent-text;
+  font-size: 22rpx;
 }
 .store-name {
   display: block;
   margin-top: 24rpx;
   color: $qs-font-title;
-  font-size: 27rpx;
+  font-size: 28rpx;
   font-weight: 500;
 }
 .muted {
   display: block;
-  margin-top: 10rpx;
+  margin-top: 8rpx;
   color: $qs-font-dec;
   font-size: 22rpx;
   line-height: 1.8;
 }
 .contact-info {
-  margin-top: 22rpx;
-  padding-top: 22rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
   border-top: 1rpx solid $qs-divider;
-  font-size: 25rpx;
+  font-size: 26rpx;
 }
 .product-row {
   display: flex;
   align-items: flex-start;
-  gap: 18rpx;
+  gap: 16rpx;
   margin-top: 24rpx;
   padding-bottom: 24rpx;
   border-bottom: 1rpx solid $qs-divider;
@@ -192,15 +202,15 @@
 }
 .product-price {
   flex: none;
-  font-size: 25rpx;
+  font-size: 26rpx;
 }
 .amount-row,
 .info-row {
   margin-top: 24rpx;
-  font-size: 23rpx;
+  font-size: 24rpx;
 }
 .discount {
-  color: $qs-brandColor;
+  color: $qs-accent-text;
 }
 .total-row {
   padding-top: 24rpx;
@@ -209,8 +219,10 @@
 }
 .price {
   font-size: 34rpx;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .info-row {
   color: $qs-font-dec;
@@ -224,6 +236,8 @@
   text-align: right;
   overflow-wrap: anywhere;
   line-height: 1.7;
+  min-width: 0;
+  flex: 1;
 }
 .order-number {
   display: flex;
@@ -240,8 +254,8 @@
     padding: 4rpx 12rpx;
     border: 1rpx solid $qs-border;
     border-radius: 20rpx;
-    color: $qs-brandColor;
-    font-size: 20rpx;
+    color: $qs-accent-text;
+    font-size: 22rpx;
   }
 }
 .footer-note,
@@ -256,7 +270,7 @@
 .demo-note {
   margin-top: 8rpx;
   color: $qs-font-dec2;
-  font-size: 21rpx;
+  font-size: 22rpx;
 }
 .action-bar {
   position: fixed;
@@ -265,20 +279,20 @@
   right: 0;
   z-index: 10;
   display: flex;
-  gap: 20rpx;
-  padding: 20rpx $qs-page-spacing calc(20rpx + env(safe-area-inset-bottom));
+  gap: 16rpx;
+  padding: 24rpx $qs-page-spacing calc(24rpx + env(safe-area-inset-bottom));
   background: $qs-card-bg;
   border-top: 1rpx solid $qs-divider;
   button {
     flex: 1;
-    padding: 20rpx;
-    border-radius: 40rpx;
+    padding: 24rpx;
+    border-radius: 16rpx;
     font-size: 26rpx;
   }
 }
 .detail-page .contact-button {
   border: 1rpx solid $qs-border;
-  color: $qs-brandColor;
+  color: $qs-accent-text;
 }
 .detail-page .shopping-button {
   background: $qs-brandColor;
@@ -290,6 +304,18 @@
   color: $qs-font-dec;
   button {
     margin-top: 24rpx;
-    color: $qs-brandColor;
+    color: $qs-accent-text;
   }
 }
+
+.action-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 88rpx;
+  padding: 16rpx 8rpx;
+  font-size: 24rpx;
+  border: 1rpx solid $qs-border;
+}
+.progress-step { text-align: center; }

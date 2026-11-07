@@ -1,13 +1,14 @@
-$qs-pageBackGroundColor: #f7f9f8; // 页面背景：浅灰白色
+$qs-pageBackGroundColor: #fffefa; // 页面背景：品牌奶白色
 $qs-page-spacing: 24rpx; // 全项目页面左右间距。
-$qs-brandColor: #eed261; // 主题色：暖黄色，品牌色、价格颜色、主要按钮背景
+$qs-brandColor: #eed261; // 主题色：暖黄色，主要按钮、选中背景及品牌标识
+$qs-accent-text: #796315; // 深金色：价格、文本操作和浅色背景上的强调信息
 $qs-brandColor-pressed: #d8ba43; // 主要按钮按下状态
 $qs-brandColor-light: #fff9e5; // 主题浅色：选中项、活动区域背景
 
-$qs-font-title: #242b27; // 页面标题、商品名称、重要信息
-$qs-font-body: #4b554f; // 正文、规格、地址及订单信息
-$qs-font-dec: #707b74; // 辅助文字：说明、次要信息
-$qs-font-dec2: #849087; // 辅助文字2：更弱的说明、原价
+$qs-font-title: #24251f; // 页面标题、商品名称、重要信息
+$qs-font-body: #505148; // 正文、规格、地址及订单信息
+$qs-font-dec: #76776c; // 辅助文字：说明、次要信息
+$qs-font-dec2: #76776c; // 次级信息保留足够对比度，层级通过字号与留白表达
 $qs-font-placeholder: #a5afa8; // 输入占位文字，不用于重要信息
 $qs-font-inverse: #302b19; // 暖黄色主题按钮上的文字
 
@@ -16,9 +17,9 @@ $qs-card-activity-bg: #fff9e5; // 新人领券、邀请活动卡片背景
 $qs-card-custom-bg: #fffdf3; // 定制花束入口背景
 $qs-coupon-bg: #fff8df; // 优惠券背景
 
-$qs-border: #e2e9e4; // 卡片及输入框边框
-$qs-divider: #edf1ee; // 列表内部细分隔线
-$qs-input-bg: #f0f4f1; // 输入框、搜索框背景
+$qs-border: #e5e5da; // 卡片及输入框边框
+$qs-divider: #f0f0e8; // 列表内部细分隔线
+$qs-input-bg: #f6f5ef; // 输入框、搜索框背景
 
 $qs-success: #287653; // 已完成、核销成功
 $qs-success-bg: #edf6f0; // 成功状态浅色背景

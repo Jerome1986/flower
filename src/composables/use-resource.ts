@@ -1,31 +1,24 @@
-import { ref, shallowRef, watch } from 'vue'
-import { onUnload } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/modules/user'
 import { integrationMessage, isIntegrationPending } from '@/utils/integration'
-
+import { onUnload } from '@dcloudio/uni-app'
+import { ref, shallowRef, watch } from 'vue'
 /** 账户隔离、最后一次请求生效，未接入与失败/空数据分别展示。 */
-export function useResource<T>(
+export const useResource = <T>(
   fetcher: () => Promise<T>,
   authenticated: boolean | (() => boolean) = true,
-) {
-  const user = useUserStore()
-  const data = shallowRef<T>()
-  const loading = ref(false)
-  const message = ref('')
-  const pending = ref(false)
-  let version = 0
-  function reset() {
+) => {
+  const reset = () => {
     version++
     data.value = undefined
     loading.value = false
     message.value = ''
     pending.value = false
   }
-  function fail(error: unknown) {
+  const fail = (error: unknown) => {
     pending.value = isIntegrationPending(error)
     message.value = integrationMessage(error)
   }
-  async function load() {
+  const load = async () => {
     const current = ++version
     const token = user.token
     data.value = undefined
@@ -46,6 +39,12 @@ export function useResource<T>(
       if (current === version) loading.value = false
     }
   }
+  const user = useUserStore()
+  const data = shallowRef<T>()
+  const loading = ref(false)
+  const message = ref('')
+  const pending = ref(false)
+  let version = 0
   watch(() => user.token, reset, { flush: 'sync' })
   onUnload(reset)
   return { data, loading, message, pending, load, reset, fail }

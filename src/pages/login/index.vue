@@ -1,23 +1,14 @@
 <script setup lang="ts">
 import { wxLogin } from '@/api/user'
+import pages from '@/pages.json'
 import { useUserStore } from '@/stores'
+import { safeReturnUrl } from '@/utils/login-return'
 import { onLoad } from '@dcloudio/uni-app'
 import { ref } from 'vue'
-import pages from '@/pages.json'
-import { safeReturnUrl } from '@/utils/login-return'
-
 const userStore = useUserStore()
 const agreed = ref(false)
 const loading = ref(false)
 const returnUrl = ref('')
-function checkAgreement() {
-  if (!agreed.value) uni.showToast({ icon: 'none', title: '请先阅读并勾选用户协议' })
-}
-
-function showAgreement(type: 'terms' | 'privacy') {
-  uni.navigateTo({ url: `/pages/agreement/${type}` })
-}
-
 // 获取手机号凭证返回类型
 type GetPhoneNumberEvent = {
   detail: {
@@ -27,50 +18,42 @@ type GetPhoneNumberEvent = {
     encryptedData?: string // 加密数据（已废弃）
   }
 }
-
 // 页面刷新获取最新CODE
 const inviterCode = ref('')
-onLoad((options) => {
-  returnUrl.value = safeReturnUrl(options?.returnUrl) ||
-    (options?.from === 'coupon' ? '/pages/coupons/index' : '/pages/my/index')
-  inviterCode.value = String(uni.getStorageSync('flower-pending-invite-code') || '')
-})
-
+const checkAgreement = () => {
+  if (!agreed.value) uni.showToast({ icon: 'none', title: '请先阅读并勾选用户协议' })
+}
+const showAgreement = (type: 'terms' | 'privacy') => {
+  uni.navigateTo({ url: `/pages/agreement/${type}` })
+}
 // 手机登录
 const handleLogin = async (e: GetPhoneNumberEvent) => {
   if (loading.value) return
-
   if (!agreed.value) {
     uni.showToast({ icon: 'none', title: '请先阅读并勾选用户协议' })
     return
   }
-
   const phoneCode = e.detail.code
-
   if (!phoneCode) {
     uni.showToast({ icon: 'none', title: '未获取到手机号授权凭证' })
     return
   }
-
   loading.value = true
   try {
     const loginRes = await uni.login()
     if (!loginRes.code) throw new Error('获取微信登录凭证失败')
     const wxRes = await wxLogin(loginRes.code, phoneCode, inviterCode.value)
-
     if (wxRes.code === 200 && wxRes.data) {
       const userRes = wxRes.data
       userStore.clearProfile()
       userStore.setProfile(userRes.user)
       userStore.setToken(userRes.token)
       uni.removeStorageSync('flower-pending-invite-code')
-
       uni.showToast({
         icon: 'success',
         title: '登录成功',
         duration: 1000,
       })
-
       const target = returnUrl.value
       const path = target.split('?')[0]
       if (pages.tabBar.list.some((item) => '/' + item.pagePath === path)) {
@@ -90,6 +73,12 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
     loading.value = false
   }
 }
+onLoad((options) => {
+  returnUrl.value =
+    safeReturnUrl(options?.returnUrl) ||
+    (options?.from === 'coupon' ? '/pages/coupons/index' : '/pages/my/index')
+  inviterCode.value = String(uni.getStorageSync('flower-pending-invite-code') || '')
+})
 </script>
 
 <template>
@@ -101,7 +90,16 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
     </view>
 
     <view class="login-actions">
-      <button class="login-button" :loading="loading" :disabled="loading" :open-type="agreed ? 'getPhoneNumber' : undefined" @click="checkAgreement" @getphonenumber="handleLogin">一键登录</button>
+      <button
+        class="login-button"
+        :loading="loading"
+        :disabled="loading"
+        :open-type="agreed ? 'getPhoneNumber' : undefined"
+        @click="checkAgreement"
+        @getphonenumber="handleLogin"
+      >
+        一键登录
+      </button>
       <view class="privacy-row">
         <checkbox-group @change="agreed = $event.detail.value.includes('agree')">
           <label class="privacy-check">
@@ -136,7 +134,7 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: clamp(100rpx, 16vh, 240rpx);
+  padding-top: clamp(64rpx, 12vh, 160rpx);
   text-align: center;
 }
 
@@ -152,23 +150,23 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
   margin-top: 48rpx;
   font-size: 40rpx;
   font-weight: 600;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   line-height: 1.5;
 }
 
 .brand-slogan {
-  margin-top: 18rpx;
-  color: #85877d;
-  font-size: 25rpx;
+  margin-top: 16rpx;
+  color: #76776c;
+  font-size: 26rpx;
   line-height: 1.8;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 
 .login-actions {
   width: 100%;
   max-width: 620rpx;
-  margin-top: 120rpx;
-  margin-bottom: 80rpx;
+  margin-top: 80rpx;
+  margin-bottom: 64rpx;
 }
 
 .login-button {
@@ -177,12 +175,12 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
   align-items: center;
   width: 100%;
   height: 100rpx;
-  border-radius: 50rpx;
+  border-radius: 16rpx;
   background: #eed261;
   color: #453d20;
   font-size: 30rpx;
   font-weight: 600;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
 }
 
 .login-button::after,
@@ -196,8 +194,8 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
   align-items: center;
   justify-content: center;
   margin-top: 28rpx;
-  color: #85877d;
-  font-size: 23rpx;
+  color: #76776c;
+  font-size: 24rpx;
 }
 
 .privacy-check {
@@ -223,8 +221,8 @@ const handleLogin = async (e: GetPhoneNumberEvent) => {
 
 .footer {
   margin-top: auto;
-  color: #a8a89c;
+  color: #76776c;
   font-size: 22rpx;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
 }
 </style>

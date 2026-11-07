@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from 'vue'
 import { openAuthPage } from '@/utils/login-return'
 import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
@@ -6,14 +6,18 @@ import { useUserStore } from '@/stores/modules/user'
 import { getInvitationApi as getInvitation } from '@/api/marketing'
 import { useResource } from '@/composables/use-resource'
 const userStore = useUserStore()
-const resource = useResource(getInvitation)
+// 请求工具返回包装对象，页面只使用业务数据。
+const resource = useResource(async () => (await getInvitation()).data)
 const invitation = resource.data
-const inviteCode = computed(() => invitation.value?.code || '')
-const records = computed(() => invitation.value?.records || [])
 const loading = resource.loading
 const message = resource.message
-const pending = resource.pending
-const steps = ['分享给好友', '好友首次注册', '查看活动奖励']
+const inviteCode = computed(() => invitation.value?.code || '')
+const records = computed(() => invitation.value?.records || [])
+const steps = [
+  { title: '分享给好友', copy: '把喜欢的花店分享给微信好友' },
+  { title: '好友打开小程序', copy: '一起发现喜欢的鲜花' },
+  { title: '各自挑选心意', copy: '为日常添一束花，也为彼此送份心意' },
+]
 onShow(resource.load)
 onShareAppMessage(() =>
   invitation.value
@@ -24,145 +28,121 @@ onShareAppMessage(() =>
       }
     : { title: '一花一份心意', path: '/pages/index/index' },
 )
-function login() {
+const login = () => {
   uni.navigateTo({ url: '/pages/login/index?returnUrl=%2Fpages%2Finvite%2Findex' })
 }
-function copyCode() {
+const copyCode = () => {
   if (!userStore.token) return login()
-  if (!inviteCode.value) return console.info('[待对接] 获取邀请码')
+  if (!inviteCode.value) return
   uni.setClipboardData({ data: inviteCode.value })
 }
-function viewCoupons() {
+const viewCoupons = () => {
   openAuthPage('/pages/coupons/index')
 }
-function shareTip() {
+const shareTip = () => {
   if (!userStore.token) return login()
-  if (!invitation.value) return console.info('[待对接] 邀请好友')
-  if (invitation.value) uni.showToast({ title: '请在微信小程序内分享，或复制邀请码', icon: 'none' })
+  uni.showToast({
+    title: inviteCode.value ? '请在微信小程序内分享，或复制邀请码' : '请在微信小程序内分享给好友',
+    icon: 'none',
+  })
 }
-function showRules() {
-  if (!invitation.value?.rules) return console.info('[待对接] 邀请活动规则')
+const showRules = () => {
+  if (!invitation.value?.rules) return
   uni.showModal({
     title: '邀请活动规则',
     content: invitation.value.rules,
     showCancel: false,
-    confirmColor: '#eed261',
+    confirmColor: '#8a5b14',
   })
 }
 </script>
 
 <template>
   <view class="invite-page">
-    <view class="intro">
-      <text class="eyebrow">花礼，与你分享</text>
-      <button class="rules-link" @click="showRules">
-        活动规则
-        <text class="iconfont icon-youjiantou1" />
-      </button>
+    <view v-if="loading || message" class="panel status-panel">
+      <text>{{ loading ? '正在加载邀请信息…' : message }}</text>
+      <button v-if="!loading && !userStore.token" @click="login">登录查看我的邀请</button>
+      <button v-else-if="!loading" @click="resource.load">重新加载</button>
     </view>
-    <view class="hero">
-      <view class="hero-copy">
-        <text class="hero-title">
-          邀好友，
-          <text>一起收花</text>
-        </text>
-        <text class="hero-subtitle">
-          分享一份美好
-          <text>让心意在鲜花里相遇</text>
-        </text>
+    <view class="panel">
+      <text class="section-title">美好分享，轻松三步</text>
+      <view class="steps">
+        <view v-for="(step, index) in steps" :key="step.title" class="step">
+          <text class="step-number">0{{ index + 1 }}</text>
+          <view class="step-copy"
+            ><text class="step-title">{{ step.title }}</text
+            ><text class="hint">{{ step.copy }}</text></view
+          >
+        </view>
       </view>
-      <image class="hero-image" src="/static/home/tulip.jpg" mode="aspectFill" />
     </view>
-    <view v-if="loading || message" class="panel"
-      ><text>{{ loading ? '正在加载邀请活动…' : message }}</text
-      ><button v-if="!loading && !pending && userStore.token" @click="resource.load">重试</button
-      ><button v-if="!userStore.token" @click="login">登录</button></view
-    >
-    <button v-if="!invitation && !loading" class="share-button" @click="shareTip">
-      分享给微信好友
-    </button>
-    <template v-if="invitation">
-      <view class="panel reward-panel">
-        <text class="section-title">你送出邀请，我们送上花礼</text>
-        <text class="subtitle">{{ invitation.rules }}</text>
-        <view class="reward-row">
-          <view>
-            <text class="iconfont icon-hua" />
-            <text class="reward-title">好友领新人券</text>
-            <text class="hint">从第一束花开始</text>
-          </view>
-          <text class="reward-plus">＋</text>
-          <view>
-            <text class="iconfont icon-liwuhe" />
-            <text class="reward-title">你领奖励券</text>
-            <text class="hint">以活动规则为准</text>
-          </view>
-        </view>
-        <!-- 微信端使用原生分享按钮。 -->
-        <!-- #ifdef MP-WEIXIN -->
-        <button class="share-button" open-type="share">分享给微信好友</button>
-        <!-- #endif -->
-        <!-- #ifndef MP-WEIXIN -->
-        <button class="share-button" @click="shareTip">分享给微信好友</button>
-        <!-- #endif -->
-        <view class="code-row">
-          <text class="hint">
-            我的邀请码
-            <text class="invite-code">{{ inviteCode }}</text>
-          </text>
-          <button @click="copyCode">复制</button>
+    <view class="panel invitation-card">
+      <view class="panel-heading">
+        <text class="eyebrow">好花，值得分享</text>
+        <button v-if="invitation?.rules" class="text-link" @click="showRules">
+          活动规则 <text class="iconfont icon-youjiantou1" />
+        </button>
+      </view>
+      <view class="invitation-heading">
+        <text class="hero-title">邀好友，一起收花</text>
+        <text class="subtitle">把喜欢分享给朋友<text>让鲜花成为你们日常的小美好</text></text>
+      </view>
+      <view class="invitation-message">
+        <text class="flower-mark iconfont icon-hua" />
+        <view class="message-copy">
+          <text class="message-title">送你一份关于鲜花的邀请</text>
+          <text class="hint">一起选花，把心意带回家</text>
         </view>
       </view>
-      <view class="panel">
-        <text class="section-title">把美好分享，只需三步</text>
-        <view class="steps">
-          <view v-for="(step, index) in steps" :key="step" class="step">
-            <text class="step-number">{{ index + 1 }}</text>
-            <text>{{ step }}</text>
-          </view>
-        </view>
-        <text class="hint">具体奖励及发放条件以活动规则为准</text>
+      <!-- #ifdef MP-WEIXIN -->
+      <button class="share-button" open-type="share">分享给微信好友</button>
+      <!-- #endif -->
+      <!-- #ifndef MP-WEIXIN -->
+      <button class="share-button" @click="shareTip">分享给微信好友</button>
+      <!-- #endif -->
+      <view v-if="inviteCode" class="code-row">
+        <view class="code-copy"
+          ><text class="hint">我的邀请码</text
+          ><text class="invite-code">{{ inviteCode }}</text></view
+        >
+        <button class="copy-button" @click="copyCode">复制</button>
       </view>
-      <view class="panel">
-        <view class="panel-heading">
-          <text class="section-title">我的邀请成果</text>
-          <button class="text-link" @click="viewCoupons">
-            查看花礼券
-            <text class="iconfont icon-youjiantou1" />
-          </button>
-        </view>
+      <text v-else class="share-note">分享一份喜欢，从一束花开始</text>
+    </view>
+    <view v-if="invitation" class="panel">
+      <view class="panel-heading">
+        <text class="section-title">我的邀请</text>
+        <button v-if="invitation" class="text-link" @click="viewCoupons">
+          查看花礼券 <text class="iconfont icon-youjiantou1" />
+        </button>
+      </view>
+      <template v-if="invitation">
         <view class="statistics">
-          <view>
-            <text class="stat-value">
-              {{ invitation.invitedCount }}
-              <text>人</text>
-            </text>
-            <text class="hint">成功邀请</text>
-          </view>
-          <view>
-            <text class="stat-value">
-              {{ invitation.rewardCount }}
-              <text>张</text>
-            </text>
-            <text class="hint">已获奖励券</text>
-          </view>
+          <view
+            ><text class="stat-value">{{ invitation.invitedCount }}<text>人</text></text
+            ><text class="hint">成功邀请</text></view
+          >
+          <view
+            ><text class="stat-value">{{ invitation.rewardCount }}<text>张</text></text
+            ><text class="hint">已获奖励券</text></view
+          >
         </view>
-      </view>
-      <view class="panel">
-        <text class="section-title">邀请记录</text>
-        <view v-for="record in records" :key="record.id" class="record-row">
-          <view class="record-avatar"><text class="iconfont icon-hua" /></view>
-          <view class="record-copy">
-            <text class="record-name">{{ record.name }}</text>
-            <text class="hint">{{ record.date }} 注册</text>
+        <text class="reward-note">奖励及发放条件以活动规则为准</text>
+        <view class="records">
+          <text class="record-heading">邀请记录</text>
+          <view v-for="record in records" :key="record.id" class="record-row">
+            <view class="record-copy"
+              ><text class="record-name">{{ record.name }}</text
+              ><text class="hint">{{ record.date.slice(0, 10) }} 注册</text></view
+            >
+            <text class="record-reward">{{ record.reward }}</text>
           </view>
-          <text class="record-reward">{{ record.reward }}</text>
+          <text v-if="!records.length" class="empty-copy"
+            >还没有邀请记录，和好友分享第一份美好吧</text
+          >
         </view>
-        <text class="record-end">
-          {{ records.length ? '已经看到全部邀请啦' : '还没有成功邀请，分享给好友试试' }}
-        </text>
-      </view>
-    </template>
+      </template>
+    </view>
   </view>
 </template>
 

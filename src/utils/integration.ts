@@ -5,13 +5,13 @@ export class IntegrationPendingError extends Error {
     super(`${feature}接口尚未对接`)
   }
 }
-export function pendingIntegration<T>(feature: string): Promise<T> {
+export const pendingIntegration = <T>(feature: string): Promise<T> => {
   console.info(`[待对接] ${feature}`)
   return Promise.reject(new IntegrationPendingError(feature))
 }
-export function integrationMessage(error: unknown, fallback = '加载失败，请重试') {
+export const integrationMessage = (error: unknown, fallback = '加载失败，请重试') => {
   return error instanceof IntegrationPendingError ? '' : fallback
 }
-export function isIntegrationPending(error: unknown) {
+export const isIntegrationPending = (error: unknown) => {
   return error instanceof IntegrationPendingError
 }
